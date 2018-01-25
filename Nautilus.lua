@@ -48,8 +48,11 @@ function Nautilus:Nautilus_Menu()
     --Combo [[ Nautilus ]]
 	self.CQ = self:MenuBool("Combo Q", true)
 	self.CW = self:MenuBool("Combo W", true)
-	self.CE = self:MenuBool("Combo E", true)
-    self.CR = self:MenuBool("Combo R", false)
+    self.CE = self:MenuBool("Combo E", true)
+    
+    --Add R
+    self.CR = self:MenuBool("Combo R", true)
+    self.URS = self:MenuSliderInt("Minimum of HP of enemies %", 50)
     
     --Utili [[ Nautilus ]]
     self.AutoW = self:MenuBool("Auto W Collision", true)
@@ -70,7 +73,6 @@ function Nautilus:OnDrawMenu()
 			self.CQ = Menu_Bool("Combo Q", self.CQ, self.menu)
 			self.CW = Menu_Bool("Combo W", self.CW, self.menu)
             self.CE = Menu_Bool("Combo E", self.CE, self.menu)
-            self.CR = Menu_Bool("Combo R", self.CR, self.menu)
 			Menu_End()
         end
         if Menu_Begin("Draws") then
@@ -81,6 +83,11 @@ function Nautilus:OnDrawMenu()
         if Menu_Begin("Required") then
 			self.AutoW = Menu_Bool("Auto W Collision", self.AutoW, self.menu)
 			self.AutoWSlider = Menu_SliderInt("HP Minimum %", self.AutoWSlider, 0, 100, self.menu)
+			Menu_End()
+        end
+        if Menu_Begin("Configuration [R]") then
+            self.CR = Menu_Bool("Combo R", self.CR, self.menu)
+			self.URS = Menu_SliderInt("Minimum of HP of enemies %", self.URS, 0, 100, self.menu)
 			Menu_End()
         end
 		if Menu_Begin("KeyStone") then
@@ -138,7 +145,7 @@ end
 function Nautilus:RLost()
     local RNau = GetTargetSelector(825)
     Enemy = GetAIHero(RNau)
-    if CanCast(_R) and self.CR and RNau ~= 0 then
+    if CanCast(_R) and self.CR and RNau ~= 0 and Enemy.HP*100/Enemy.MaxHP < self.URS then
         CastSpellTarget(Enemy.Addr, _R)
     end
 end 
