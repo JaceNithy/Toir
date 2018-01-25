@@ -63,9 +63,9 @@ function Nautilus:Nautilus_Menu()
     self.KR = self:MenuBool("KillSteal > R", true)
 
     --Draws [[ Nautilus ]]
-    self.DQ = self:MenuBool("Draw Q")
-    self.DE = self:MenuBool("Draw E")
-    self.DR = self:MenuBool("Draw R")
+    self.DQ = self:MenuBool("Draw Q", true)
+    self.DE = self:MenuBool("Draw E", true)
+    self.DR = self:MenuBool("Draw R", true)
 
     --KeyStone [[ Nautilus ]]
 	self.Combo = self:MenuKeyBinding("Combo", 32)
