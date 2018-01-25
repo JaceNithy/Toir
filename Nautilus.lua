@@ -58,8 +58,13 @@ function Nautilus:Nautilus_Menu()
     self.AutoW = self:MenuBool("Auto W Collision", true)
     self.AutoWSlider = self:MenuSliderInt("HP Minimum %", 30)
 
+    --KillSteal [[ Nautilus ]]
+    self.KQ = self:MenuBool("KillSteal > Q", true)
+    self.KR = self:MenuBool("KillSteal > R", true)
+
     --Draws [[ Nautilus ]]
     self.DQ = self:MenuBool("Draw Q")
+    self.DE = self:MenuBool("Draw E")
     self.DR = self:MenuBool("Draw R")
 
     --KeyStone [[ Nautilus ]]
@@ -76,7 +81,8 @@ function Nautilus:OnDrawMenu()
 			Menu_End()
         end
         if Menu_Begin("Draws") then
-			self.DQ = Menu_Bool("Draw Q", self.DQ, self.menu)
+            self.DQ = Menu_Bool("Draw Q", self.DQ, self.menu)
+            self.DE = Menu_Bool("Draw E", self.DE, self.menu)
 			self.DR = Menu_Bool("Draw R", self.DR, self.menu)
 			Menu_End()
         end
@@ -90,6 +96,11 @@ function Nautilus:OnDrawMenu()
 			self.URS = Menu_SliderInt("Minimum of HP of enemies %", self.URS, 0, 100, self.menu)
 			Menu_End()
         end
+        if Menu_Begin("KillSteal") then
+            self.KQ = Menu_Bool("KillSteal > Q", self.KQ, self.menu)
+            self.KR = Menu_Bool("KillSteal > R", self.KR, self.menu)
+			Menu_End()
+        end
 		if Menu_Begin("KeyStone") then
 			self.Combo = Menu_KeyBinding("Combo", self.Combo, self.menu)
 			self.InUtimate = Menu_KeyBinding("Start the fight", self.InUtimate, self.menu)
@@ -101,6 +112,8 @@ end
 
 function Nautilus:OnDraw()
 	if self.Q:IsReady() and self.DQ then DrawCircleGame(myHero.x , myHero.y, myHero.z, self.Q.range, Lua_ARGB(255,255,255,255))
+    end
+    if self.E:IsReady() and self.DE then DrawCircleGame(myHero.x , myHero.y, myHero.z, self.E.range, Lua_ARGB(255,255,255,255))
 	end
 	if self.R:IsReady() and self.DR then DrawCircleGame(myHero.x , myHero.y, myHero.z, self.R.range, Lua_ARGB(255,255,255,255))
 	end
@@ -156,10 +169,28 @@ function Nautilus:AutoCollisionW()
     end
 end
 
+function Nautilus:KillStealEnemy()
+    local RKS = GetTargetSelector(825)
+    Enemy = GetAIHero(RKS)
+    if CanCast(_R) and self.KR and RKS ~= 0 and GetDistance(Enemy) < self.R.range and GetDamage("R", Enemy) > Enemy.HP then
+        CastSpellTarget(Enemy.Addr, R)
+    end 
+    local QKS = GetTargetSelector(1100)
+    Enemy = GetAIHero(QKS)
+    if CanCast(_Q) and self.KQ and QKS ~= 0 and GetDistance(Enemy) < self.Q.range and GetDamage("Q", Enemy) > Enemy.HP then
+        local CQPosition, HitChance, Position = self.Predc:GetLineCastPosition(Enemy, self.Q.delay, self.Q.width, self.Q.range, self.Q.speed, myHero, false)
+		local Son = CountObjectCollision(0, Enemy.Addr, myHero.x, myHero.z, CQPosition.x, CQPosition.z, self.Q.width, self.Q.range, 10)
+		if Son == 0 and HitChance >= 2 then
+			CastSpellToPos(CQPosition.x, CQPosition.z, _Q)
+        end
+    end  
+end 
+
 function Nautilus:OnTick()
     if IsDead(myHero.Addr) or IsTyping() or IsDodging() then return end
 
     self:AutoCollisionW()
+    self:KillStealEnemy()
 
     if GetKeyPress(self.InUtimate) > 0 then	
         self:StartFight()
