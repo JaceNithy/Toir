@@ -67,6 +67,9 @@ function Nasus:TopLane()
       --KillSteal [[ Nasus ]]
       self.KQ = self:MenuBool("KillSteal > Q", true)
       self.KE = self:MenuBool("KillSteal > E", true)
+
+      --Spe
+      self.AGap = self:MenuBool("AntiGapclose",true)
   
       --Draws [[ Nasus ]]
       self.DQ = self:MenuBool("Draw Q", true)
@@ -108,6 +111,10 @@ function Nasus:TopLane()
               self.KE = Menu_Bool("KillSteal > E", self.KE, self.menu)
               Menu_End()
           end
+          if Menu_Begin("Misc") then
+            self.AGap = Menu_Bool("AntiGapclose",self.AGap,self.menu)
+            Menu_End()
+        end
           if Menu_Begin("KeyStone") then
               self.Combo = Menu_KeyBinding("Combo", self.Combo, self.menu)
               self.LastHit = Menu_KeyBinding("Last Hit", self.LastHit, self.menu)
@@ -176,7 +183,7 @@ end
 function Nasus:RComp()
     local UseR = GetTargetSelector(825)
     Enemy = GetAIHero(UseR)
-    if CanCast(R) and UseR ~= 0 and self.CR and IsValidTarget(Enemy, self.R.range) and CountEnemyChampAroundObject(Enemy, self.R.range) <= 1 and GetPercentHP(myHero.Addr) < self.URS then --solo then 
+    if CanCast(R) and UseR ~= 0 and self.CR and IsValidTarget(Enemy, self.R.range) and CountEnemyChampAroundObject(Enemy, self.R.range) <= 1 and GetPercentHP(myHero.Addr) < self.URS then 
         CastSpellTarget(myHero.Addr, _R)
     end 
 end 
@@ -199,10 +206,23 @@ function Nasus:LaneFarmeQ()
     end 
 end 
 
+function Nasus:AGapclose()
+    for i,Enemys in pairs(GetEnemyHeroes()) do
+        if Enemys ~= nil and CanCast(_W) and self.AGap then
+            local target = GetAIHero(Enemys)
+            local TargetDashing, CanHitDashing, DashPosition = self.PredNasus:IsDashing(target, self.W.delay, self.W.width, self.W.speed, myHero, false)
+            if DashPosition ~= nil and GetDistance(DashPosition) < self.W.range then
+                CastSpellToPos(DashPosition.x,DashPosition.z, _W)
+            end
+        end
+    end
+end
+
 function Nasus:OnTick()
     if IsDead(myHero.Addr) or IsTyping() or IsDodging() then return end
 
     self:KillEnemy()
+    self.AGapclose()
 
     if GetKeyPress(self.LastHit) > 0 then	
         self:FarmeQ()
