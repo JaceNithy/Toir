@@ -184,7 +184,7 @@ end
 function Nasus:FarmeQ()
     self.EnemyMinions:update()
     for i ,minion in pairs(self.EnemyMinions.objects) do
-       if GetPercentMP(myHero.Addr) >= self.AutoQMana and self.AutoQ and IsValidTarget(minion, GetTrueAttackRange()) and GetDamage("Q", minion) > minion.HP then
+       if GetPercentMP(myHero.Addr) >= self.AutoQMana and self.AutoQ and IsValidTarget(minion.Addr, GetTrueAttackRange()) and GetDamage("Q", minion) > minion.HP then
         CastSpellTarget(myHero.Addr, Q)
        end 
     end 
@@ -193,9 +193,19 @@ end
 function Nasus:LaneFarmeQ()
     self.EnemyMinions:update()
     for i ,minion in pairs(self.EnemyMinions.objects) do
-       if GetPercentMP(myHero.Addr) >= self.AutoQMana and self.AutoQ and IsValidTarget(minion, GetTrueAttackRange()) and GetDamage("Q", minion) > minion.HP then
+       if GetPercentMP(myHero.Addr) >= self.AutoQMana and self.AutoQ and IsValidTarget(minion.Addr, GetTrueAttackRange()) and GetDamage("Q", minion) > minion.HP then
         CastSpellTarget(myHero.Addr, Q)
        end 
+    end 
+end 
+
+function Nasus:ToTurrent()
+    GetAllUnitAroundAnObject(myHero.Addr, 2000)
+	local objects = pUnit
+	for k,v in pairs(objects) do
+        if IsTurret(v) and not IsDead(v) and IsEnemy(v) and GetTargetableToTeam(v) == 4 and IsValidTarget(v, GetTrueAttackRange()) then
+            CastSpellTarget(myHero.Addr, _Q)
+        end 
     end 
 end 
 
@@ -210,6 +220,7 @@ function Nasus:OnTick()
 
     if GetKeyPress(self.LaneClear) > 0 then	
         self:LaneFarmeQ()
+        self:ToTurrent()
     end
 
 	if GetKeyPress(self.Combo) > 0 then	
