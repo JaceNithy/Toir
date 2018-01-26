@@ -93,7 +93,7 @@ function Nasus:TopLane()
           if Menu_Begin("Draws") then
               self.DQ = Menu_Bool("Draw Q", self.DQ, self.menu)
               self.DW = Menu_Bool("Draw W", self.DW, self.menu)
-              self.DE = Menu_Bool("Draw W", self.DE, self.menu)
+              self.DE = Menu_Bool("Draw E", self.DE, self.menu)
               Menu_End()
           end
           if Menu_Begin("Last Hit") then
@@ -208,7 +208,7 @@ end
 
 function Nasus:AGapclose()
     for i,Enemys in pairs(GetEnemyHeroes()) do
-        if Enemys ~= nil and CanCast(_W) and self.AGap then
+        if Enemys ~= nil and CanCast(_W) then
             local target = GetAIHero(Enemys)
             local TargetDashing, CanHitDashing, DashPosition = self.PredNasus:IsDashing(target, self.W.delay, self.W.width, self.W.speed, myHero, false)
             if DashPosition ~= nil and GetDistance(DashPosition) < self.W.range then
