@@ -203,7 +203,6 @@ function Nasus:OnTick()
     if IsDead(myHero.Addr) or IsTyping() or IsDodging() then return end
 
     self:KillEnemy()
-    self.AGapclose()
 
     if GetKeyPress(self.LastHit) > 0 then	
         self:FarmeQ()
