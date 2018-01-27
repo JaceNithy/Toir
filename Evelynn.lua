@@ -150,14 +150,14 @@ end
 function Evelynn:OnUpdateBuff(source, unit, buff, stacks)
     if unit.IsEnemy and buff.Name == "EvelynnW" then
         self.MakedW = true
-        self.Wstack = GetTimeGame()
+        self.Wstack = buff.Count
     end
 end
 
 function Evelynn:OnRemoveBuff(unit, buff)
     if unit.IsEnemy and buff.Name == "EvelynnW" then
         self.MakedW = false
-        self.Wstack = GetTimeGame()
+        self.Wstack = buff.Count
     end
 end
 
@@ -193,8 +193,8 @@ function Evelynn:FishEnemy()
         end
     end 
     local UseR = GetTargetSelector(500)
-    Enemy = GetAIHero(UseR)
-    if CanCast(_R) and self.KR and UseR ~= 0 and GetDistance(Enemy) < self.R.range and GetDamage("R", Enemy) > Enemy.HP then
+    EnemyR = GetAIHero(UseR)
+    if CanCast(_R) and self.KR and UseR ~= 0 and GetDistance(EnemyR) < self.R.range and GetDamage("R", EnemyR) > EnemyR.HP then
         local CRPosition, HitChance, Position = self.Predc:GetLineCastPosition(Enemy, self.R.delay, self.R.width, self.R.range, self.R.speed, myHero, false)
 		if HitChance >= 2 then
             CastSpellToPos(CRPosition.x, CRPosition.z, _R)
@@ -263,7 +263,7 @@ end
 function Evelynn:RIsEnemy()
     local UseR = GetTargetSelector(self.R.range)
     Enemy = GetAIHero(UseR)
-    if self.R:IsReady() and UseR ~= 0 and IsValidTarget(target, self.R.range) and CountEnemyChampAroundObject(target, self.R.range) <= 1 and Enemy.HP*100/Enemy.MaxHP < 25 then 
+    if CanCast(_R) and UseR ~= 0 and IsValidTarget(Enemy, self.R.range) and Enemy.HP*100/Enemy.MaxHP < 25 then 
         local CrPosition, HitChance, Position = self.Predc:GetLineCastPosition(Enemy, self.R.delay, self.R.width, self.R.range, self.R.speed, myHero, false)
         if HitChance >= 2 then
         CastSpellToPos(CrPosition.x, CrPosition.z, _R)
