@@ -211,7 +211,7 @@ function Evelynn:QPaixon()
     local UseQ = GetTargetSelector(800)
     Enemy = GetAIHero(UseQ)
     if self.ModeQ == 0 then
-    if CanCast(_Q) and self.CQ and UseQ ~= 0 and GetDistance(Enemy) < self.Q.range then
+    if CanCast(_Q) and self.CQ and self.MakedW and UseQ ~= 0 and GetDistance(Enemy) < self.Q.range then
         local CQPosition, HitChance, Position = self.Predc:GetLineCastPosition(Enemy, self.Q.delay, self.Q.width, self.Q.range, self.Q.speed, myHero, false)
         local Sun = CountObjectCollision(0, Enemy.Addr, myHero.x, myHero.z, CQPosition.x, CQPosition.z, self.Q.width, self.Q.range, 10)
 		if Sun == 0 and HitChance >= 2 then
