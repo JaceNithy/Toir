@@ -201,6 +201,14 @@ function Xin:Epos()
     end
 end 
 
+function Xin:RIsEnemy()
+    local UseR = GetTargetSelector(500)
+    Enemy = GetAIHero(UseR)
+    if CanCast(R) and UseR ~= 0 and self.CR and IsValidTarget(Enemy, self.R.range) and CountEnemyChampAroundObject(Enemy, self.R.range) <= 1 and Enemy.HP*100/Enemy.MaxHP < 25 then 
+        CastSpellTarget(myHero.Addr, _R)
+    end 
+end 
+
 function Xin:OnTick()
   if IsDead(myHero.Addr) or IsTyping() or IsDodging() then return end
 
