@@ -75,7 +75,9 @@ function Evelynn:EveMenus()
 
     --Add R
     self.CR = self:MenuBool("Combo R", true)
-    self.RE = self:MenuBool("Remove Enemy", true)
+    self.UseRLogic = self:MenuBool("Use Logic R", true)
+    self.UseRmy = self:MenuSliderInt("HP Minimum %", 45)
+    self.UseRange = self:MenuSliderInt("Range Enemys", 2)
 
     --KillSteal [[ Evelynn ]]
     self.KQ = self:MenuBool("KillSteal > Q", true)
@@ -85,7 +87,6 @@ function Evelynn:EveMenus()
     --Draws [[ Evelynn ]]
     self.DQWER = self:MenuBool("Draw On/Off", true)
     self.DQ = self:MenuBool("Draw Q", true)
-    self.DW = self:MenuBool("Draw W", true)
     self.DE = self:MenuBool("Draw E", true)
     self.DR = self:MenuBool("Draw R", true)
 
@@ -115,13 +116,18 @@ function Evelynn:OnDrawMenu()
         if Menu_Begin("Draws") then
             self.DQWER = Menu_Bool("Draw On/Off", self.DQWER, self.menu)
             self.DQ = Menu_Bool("Draw Q", self.DQ, self.menu)
-            self.DW = Menu_Bool("Draw W", self.DW, self.menu)
             self.DE = Menu_Bool("Draw E", self.DE, self.menu)
 			self.DR = Menu_Bool("Draw R", self.DR, self.menu)
 			Menu_End()
         end
         if Menu_Begin("Configuration [R]") then
             self.CR = Menu_Bool("Combo R", self.CR, self.menu)
+			Menu_End()
+        end
+        if Menu_Begin("Logic [R]") then
+            self.UseRLogic = Menu_Bool("Logic R", self.UseRLogic, self.menu)
+            self.UseRmy = Menu_SliderInt("My HP Minimum %", self.UseRmy, 0, 100, self.menu)
+            self.UseRange = Menu_SliderInt("Range Enemys %", self.UseRange, 0, 5, self.menu)
 			Menu_End()
         end
         if Menu_Begin("KillSteal") then
@@ -168,10 +174,6 @@ function Evelynn:OnDraw()
         DrawCircleGame(myHero.x, myHero.y, myHero.z,self.Q.range, Lua_ARGB(255,255,0,0))
       end
 
-      if self.DW and self.W:IsReady() then
-        DrawCircleGame(myHero.x, myHero.y, myHero.z, self.W.range, Lua_ARGB(255,0,255,0))
-      end 
-
       if self.DE and self.E:IsReady() then
         DrawCircleGame(myHero.x, myHero.y, myHero.z, self.E.range, Lua_ARGB(255,0,0,255))
       end
@@ -211,7 +213,7 @@ function Evelynn:QPaixon()
     local UseQ = GetTargetSelector(800)
     Enemy = GetAIHero(UseQ)
     if self.ModeQ == 0 then
-    if CanCast(_Q) and self.CQ and self.MakedW and UseQ ~= 0 and GetDistance(Enemy) < self.Q.range then
+    if CanCast(_Q) and self.CQ and self.Wstack and UseQ ~= 0 and GetDistance(Enemy) < self.Q.range then
         local CQPosition, HitChance, Position = self.Predc:GetLineCastPosition(Enemy, self.Q.delay, self.Q.width, self.Q.range, self.Q.speed, myHero, false)
         local Sun = CountObjectCollision(0, Enemy.Addr, myHero.x, myHero.z, CQPosition.x, CQPosition.z, self.Q.width, self.Q.range, 10)
 		if Sun == 0 and HitChance >= 2 then
@@ -271,10 +273,23 @@ function Evelynn:RIsEnemy()
     end
 end 
 
+function Evelynn:LogicRIsEnemy()
+    local UseR = GetTargetSelector(self.R.range)
+    Enemy = GetAIHero(UseR)
+    if CanCast(R) and UseR ~= 0 and self.CR and IsValidTarget(Enemy, self.R.range) and CountEnemyChampAroundObject(Enemy, self.R.range) <= self.UseRange and GetPercentHP(myHero.Addr) < self.UseRmy then 
+        local CrPosition, HitChance, Position = self.Predc:GetLineCastPosition(Enemy, self.R.delay, self.R.width, self.R.range, self.R.speed, myHero, false)
+        if HitChance >= 2 then
+        CastSpellToPos(CrPosition.x, CrPosition.z, _R)
+        end
+    end 
+end 
+
+
 function Evelynn:OnTick()
     if IsDead(myHero.Addr) or IsTyping() or IsDodging() then return end
 
     self:FishEnemy()
+    self:LogicRIsEnemy()
 
     if GetSpellLevel(GetMyChamp(), _W) >= 1 then
         self.W.range = 1100 * GetSpellLevel(GetMyChamp(), _W) + 100
