@@ -220,9 +220,9 @@ function Xin:OnTick()
 end 
 
 function Xin:AntDashing()
-  for i,enm in pairs(GetEnemyHeroes()) do
-      if enm ~= nil and CanCast(_W) then
-          local hero = GetAIHero(enm)
+  for i,IsEnemu in pairs(GetEnemyHeroes()) do
+      if IsEnemu ~= nil and CanCast(_W) then
+          local hero = GetAIHero(IsEnemu)
           local TargetDashing, CanHitDashing, DashPosition = self.Predc:IsDashing(hero, self.E.delay, self.E.width, self.E.speed, myHero, false)
           if DashPosition ~= nil and GetDistance(DashPosition) <= self.W.range- 200 then
               CastSpellToPos(DashPosition.x,DashPosition.z, _W)
