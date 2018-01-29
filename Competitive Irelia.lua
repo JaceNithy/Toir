@@ -12,6 +12,14 @@ function Irelia:Assasin()
 
     self.EnemyMinions = minionManager(MINION_ENEMY, 2000, myHero, MINION_SORT_HEALTH_ASC)
     self.Predc = VPrediction(true)
+
+    self.WBuff = false
+	self.WEndBuff = 0
+	self.WTimer = nil
+	self.Trinity = false
+	self.aaTimer = 0
+	self.aaTimeReady = 0
+	self.windUP = 0
   
     self:EveMenus()
   
@@ -28,6 +36,9 @@ function Irelia:Assasin()
     Callback.Add("Tick", function() self:OnTick() end) 
     Callback.Add("Draw", function(...) self:OnDraw(...) end)
     Callback.Add("DrawMenu", function(...) self:OnDrawMenu(...) end)
+    Callback.Add("Update", function(...) self:OnUpdate(...) end)
+    Callback.Add("UpdateBuff", function(...) self:OnUpdateBuff(...) end)
+    Callback.Add("RemoveBuff", function(...) self:OnRemoveBuff(...) end)
   
   end 
 
@@ -48,6 +59,11 @@ function Irelia:MenuComboBox(stringKey, valueDefault)
 	return ReadIniInteger(self.menu, stringKey, valueDefault)
 end
 
+
+function Irelia:OnUpdate()
+------------------------
+end 
+
 function Irelia:EveMenus()
     self.menu = "Irelia"
     --Combo [[ Irelia ]]
@@ -63,6 +79,10 @@ function Irelia:EveMenus()
     --Add R
     self.CR = self:MenuBool("Combo R", true)
     self.UseRmy = self:MenuSliderInt("HP Minimum %", 35)
+
+    --Stun
+    self.StunI = self:MenuSliderInt("HP Minimum %", 35)
+    self.ModeE = self:MenuComboBox("Mode [E]", 1)
 
     --KillSteal [[ Irelia ]]
     self.KQ = self:MenuBool("KillSteal > Q", true)
@@ -89,9 +109,7 @@ function Irelia:OnDrawMenu()
 		if Menu_Begin("Combo") then
             self.CQ = Menu_Bool("Combo Q", self.CQ, self.menu)
             self.LogicQGap = Menu_Bool("Logic Q [GapMinion]", self.LogicQGap, self.menu)
-            --self.ModeQ = Menu_ComboBox("Mode [Q]", self.ModeQ, "Always\0Only with the brand\0\0", self.menu)
 			self.CW = Menu_Bool("Combo W", self.CW, self.menu)
-            self.CE = Menu_Bool("Combo E", self.CE, self.menu)
 			Menu_End()
         end
         if Menu_Begin("LaneClear") then
@@ -102,6 +120,12 @@ function Irelia:OnDrawMenu()
         if Menu_Begin("LastHit") then
 			self.LQ = Menu_Bool("Hit Q", self.LQ, self.menu)
             self.LMana = Menu_SliderInt("Mana Hit %", self.LMana, 0, 100, self.menu)
+			Menu_End()
+        end
+        if Menu_Begin("[E] Combo") then
+            self.CE = Menu_Bool("Combo E", self.CE, self.menu)
+            self.ModeE = Menu_ComboBox("Mode [E]", self.ModeE, "Always\0Only with the brand\0\0", self.menu)
+            self.StunI = Menu_SliderInt("HP Stun", self.LMana, 0, 100, self.menu)
 			Menu_End()
         end
         if Menu_Begin("Draws") then
@@ -136,23 +160,66 @@ function Irelia:OnDrawMenu()
 	end
 end
 
+function Irelia:EnemyMinionsTbl() --SDK Toir+
+    GetAllUnitAroundAnObject(myHero.Addr, 2000)
+    local result = {}
+    for i, obj in pairs(pUnit) do
+        if obj ~= 0  then
+            local minions = GetUnit(obj)
+            if IsEnemy(minions.Addr) and not IsDead(minions.Addr) and not IsInFog(minions.Addr) and GetType(minions.Addr) == 1 then
+                table.insert(result, minions)
+            end
+        end
+    end
+    return result
+end
+
+
 function Irelia:FarmeQ()
-    self.EnemyMinions:update()
-    for i ,minion in pairs(self.EnemyMinions.objects) do
+    for i ,minion in pairs(self:EnemyMinionsTbl()) do
+        if minion ~= 0 then
        if GetPercentMP(myHero.Addr) >= self.LMana and self.LQ and IsValidTarget(minion.Addr, self.Q.range) and GetDamage("Q", minion) > minion.HP and not self:IsSafe(minion) then
         CastSpellTarget(minion.Addr, Q)
+       end 
        end 
     end 
 end
 
 function Irelia:LaneFarmeQ()
-    self.EnemyMinions:update()
-    for i ,minion in pairs(self.EnemyMinions.objects) do
+    for i ,minion in pairs(self:EnemyMinionsTbl()) do
+        if minion ~= 0 then
        if GetPercentMP(myHero.Addr) >= self.LMana and self.LQ and IsValidTarget(minion.Addr, self.Q.range) and GetDamage("Q", minion) > minion.HP and not self:IsSafe(minion) then
         CastSpellTarget(minion.Addr, Q)
        end 
+       end 
     end 
 end 
+
+function Irelia:OnUpdateBuff(Object, buff)
+    if Object == myHero then
+		if buff.Name == "ireliahitenstylecharged" then
+			self.WEndBuff = buff.EndT
+			self.WBuff = true
+		end
+
+		if buff.Name == "sheen" then
+			self.Trinity = true
+		end
+	end
+end
+
+
+function Irelia:OnRemoveBuff(Object, buff)
+    if Object == myHero then
+		if buff.Name == "ireliahitenstylecharged" then
+			self.WBuff = false
+		end
+
+		if buff.Name == "sheen" then
+			self.Trinity = false
+		end
+	end
+end
 
 
 function Irelia:DashEndPos(target)
@@ -314,9 +381,18 @@ end
 function Irelia:CastE()
     local UseE = GetTargetSelector(self.E.range)
     Enemy = GetAIHero(UseE)
+    if self.ModeE == 0 then
     if CanCast(_E) and self.CE and UseE ~= 0 and GetDistance(Enemy) < self.E.range then
         CastSpellTarget(Enemy.Addr, _E)
     end 
+    end 
+    local EStun = GetTargetSelector(self.E.range)
+    Enemy1 = GetAIHero(EStun)
+    if self.ModeE == 1 then
+    if CanCast(_E) and self.CE and EStun ~= 0 and GetDistance(Enemy1) < self.E.range and GetPercentHP(myHero.Addr) < self.StunI then
+        CastSpellTarget(Enemy1.Addr, _E)
+    end 
+    end
 end
 
 function Irelia:CastR()
