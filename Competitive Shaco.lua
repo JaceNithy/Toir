@@ -133,14 +133,20 @@ function Shaco:OnDraw()
 end
 
 function Shaco:OnUpdateBuff(unit, buff)
-    if buff.Name == "deceive" and unit.IsMe then
+    if myHero then
+		--__PrintTextGame(buff.Name)
+    end
+    if buff.Name == "Deceive" and unit.IsMe then
         self.Invisible = true
         self.InvisTick = GetTickCount()
     end
 end
 
 function Shaco:OnRemoveBuff(unit, buff)
-    if buff.Name == "deceive" and unit.IsMe then
+    if myHero then
+		--__PrintTextGame(buff.Name)
+    end
+    if buff.Name == "Deceive" and unit.IsMe then
         self.Invisible = false
     end
 end
@@ -189,10 +195,11 @@ end
 function Shaco:LogicW()
     local UseW = GetTargetSelector(self.W.range)
     Enemy = GetAIHero(UseW)
-    if CanCast(_W) and self.CW and UseW ~= 0 and IsValidTarget(Enemy, self.E.range) then
-        local CEPosition, HitChance, Position = self.Shacoring:GetCircularCastPosition(Enemy, self.W.delay, self.W.width, self.W.range, self.W.speed, myHero, false)
+    if CanCast(_W) and self.CW and UseW ~= 0 and IsValidTarget(Enemy, self.W.range) then
+       -- local CEPosition, HitChance, Position = self.Shacoring:GetCircularCastPosition(Enemy, self.W.delay, self.W.width, self.W.range, self.W.speed, myHero, false)
+       local mousePos = Vector(GetMousePos())
 		if HitChance >= 2 then
-			CastSpellToPos(CEPosition.x, CEPosition.z, _W)
+			CastSpellToPos(mousePos.x, mousePos.z, _W)
         end
     end 
 end  
@@ -200,7 +207,14 @@ end
 function Shaco:CastE()
     local UseE = GetTargetSelector(self.E.range)
     Enemy = GetAIHero(UseE)
-    if CanCast(_E) and self.CE and not self.Invisible and UseE ~= 0 then
+    if self.Invisible then
+    if not CanCast(_E) and self.CE and UseE ~= 0 then
+        CastSpellTarget(Enemy.Addr, _E)
+    end 
+    end 
+    local UseE = GetTargetSelector(self.E.range)
+    Enemy = GetAIHero(UseE)
+    if CanCast(_E) and self.CE and UseE ~= 0 then
         CastSpellTarget(Enemy.Addr, _E)
     end
 end 
