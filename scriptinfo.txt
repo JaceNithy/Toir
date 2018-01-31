@@ -1,0 +1,9 @@
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20Shaco.lua
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20Evelynn.lua
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20Irelia.lua
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20Thresh.lua
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20Urgot.lua
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20XinZhao.lua
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20Yasuo.lua
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Nasus.lua
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Nautilus.lua
