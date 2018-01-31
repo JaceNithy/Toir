@@ -1,5 +1,5 @@
 ------This script contains copyright of 2 developers
----developers: Jace Nicky and CTTBOT
+---Developers: Jace Nicky and CTTBOT
 
 IncludeFile("Lib\\TOIR_SDK.lua")
 
@@ -248,15 +248,7 @@ function Lulu:OnProcessSpell(unit, spell)
 			end
 		end
     end
-    
-    if unit.IsMe then
-        if spell.Name:lower():find("attack") then
-            self.lastAttack = GetTickCount() - GetLatency()/2
-            self.lastWindUpTime = spell.windUpTime*1000
-            self.lastAttackCD = spell.animationTime*1000
-        end
-    end
-end
+end 
 
 function PredictPixPosition(Target)
 		local TargetWaypoints = self.Predc:GetCurrentWayPoints(Target)
@@ -313,6 +305,8 @@ function Lulu:OnTick()
     self:ProcessPix()
     self:CheckRAllies()
     self:LogicW()
+    self:CastR()
+    self:CastRIsMy()
 
     if GetKeyPress(self.Combo) > 0 then	
         self:ExtendedQ()
@@ -409,6 +403,14 @@ function Lulu:CastR()
 			end
 		end
 	end
+end
+
+function Lulu:CastRIsMy()
+	if GetPercentHP(myHero.Addr) <= self.UseRmy then
+		if CanCast(_R) then
+        CastSpellTarget(myHero.Addr, _R)
+        end 
+    end 	
 end
 
 function Lulu:RegularQ(Target)
