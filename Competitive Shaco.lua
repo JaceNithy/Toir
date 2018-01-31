@@ -198,9 +198,7 @@ function Shaco:LogicW()
     if CanCast(_W) and self.CW and UseW ~= 0 and IsValidTarget(Enemy, self.W.range) then
        -- local CEPosition, HitChance, Position = self.Shacoring:GetCircularCastPosition(Enemy, self.W.delay, self.W.width, self.W.range, self.W.speed, myHero, false)
        local mousePos = Vector(GetMousePos())
-		if HitChance >= 2 then
-			CastSpellToPos(mousePos.x, mousePos.z, _W)
-        end
+		CastSpellToPos(mousePos.x, mousePos.z, _W)
     end 
 end  
 
