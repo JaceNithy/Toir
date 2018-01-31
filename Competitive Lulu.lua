@@ -270,7 +270,7 @@ function PredictPixPosition(Target)
 	end
 end
 
-function Xerath:GapClose()
+function Lulu:GapClose()
     for i,Enemy in pairs(GetEnemyHeroes()) do
         if Enemy ~= nil and CanCast(_Q) then
             local hero = GetAIHero(Enemy)
