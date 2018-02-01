@@ -329,9 +329,9 @@ function Lulu:ComboLulu()
     if self.CE then
         self:LogicE()
     end 
-    --[[if self.CW then
+    if self.CW then
         self:LogicW()
-    end]]
+    end
 end 
 
 function Lulu:OnTick()
@@ -375,6 +375,33 @@ function Lulu:LogicE()
 	end
 end
 
+function Lulu:LogicW()
+	if self.AutoWShild then
+		for i,hero in pairs(GetAllyHeroes()) do
+			if hero ~= nil then
+				ally = GetAIHero(hero)
+				if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.W.range then
+					if self.AutoWShild then
+						if CountBuffByType(ally.Addr, 5) > 0 or CountBuffByType(ally.Addr, 5) > 0 then
+							CastSpellTarget(ally.Addr, _W)
+						end
+					end
+					local nearEnemys = CountEnemyChampAroundObject(ally.Addr, self.W.range)
+					if nearEnemys >= self.UseRange then
+						CastSpellTarget(ally.Addr, _W)
+					end
+					if self.UseEally >= ally.HP / ally.MaxHP * 100 then
+						CastSpellTarget(ally.Addr, _W)
+					end
+				end
+			end
+		end
+    end  
+	if myHero.HP / myHero.HP * 100 <= self.UseEmy then
+		CastSpellTarget(myHero.Addr, _W)
+	end
+end
+
 function Lulu:GetRHits()
 	local count = 0
 	local Enemies = self:GetEnemyHeroes()
@@ -398,10 +425,12 @@ function Lulu:CheckRAllies(Hits)
 end 
 
 function Lulu:CastR()
+    local UseR = GetTargetSelector(900)
+    Enemy = GetAIHero(UseR)
     for i,hero in pairs(GetAllyHeroes()) do
         if hero ~= nil then
             ally = GetAIHero(hero)
-            if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.R.range then
+            if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.R.range and CountEnemyChampAroundObject(Enemy, self.R.range) < self.UseRange then
                 if self.UseRally >= ally.HP / ally.MaxHP * 100 then
                     CastSpellTarget(ally.Addr, _R)
                 end
@@ -411,7 +440,9 @@ function Lulu:CastR()
 end
 
 function Lulu:CastRIsMy()
-	if GetPercentHP(myHero.Addr) <= self.UseRmy and CountEnemyChampAroundObject(target, self.R.range) < 1 then
+    local UseR = GetTargetSelector(900)
+    Enemy = GetAIHero(UseR)
+	if GetPercentHP(myHero.Addr) <= self.UseRmy and CountEnemyChampAroundObject(Enemy, self.R.range) < self.UseRange then
 		if CanCast(_R) then
         CastSpellTarget(myHero.Addr, _R)
         end 
