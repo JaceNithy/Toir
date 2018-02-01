@@ -448,7 +448,7 @@ function Lulu:CastR()
     local UseR = GetTargetSelector(900)
     Enemy = GetAIHero(UseR)
     for i,hero in pairs(GetAllyHeroes()) do
-        if hero ~= 0 then
+        if hero ~= 0 and Enemy ~= 0 and IsEnemy(Enemy) then
             ally = GetAIHero(hero)
             if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.R.range and CountEnemyChampAroundObject(Enemy, self.R.range) < self.UseRange then
                 if self.UseRally >= ally.HP / ally.MaxHP * 100 then
@@ -462,7 +462,7 @@ end
 function Lulu:CastRIsMy()
     local UseR = GetTargetSelector(900)
     Enemy = GetAIHero(UseR)
-	if GetPercentHP(myHero.Addr) <= self.UseRmy and CountEnemyChampAroundObject(Enemy, self.R.range) < self.UseRange then
+	if GetPercentHP(myHero.Addr) <= self.UseRmy and IsEnemy(Enemy) and CountEnemyChampAroundObject(Enemy, self.R.range) < self.UseRange then
 		if CanCast(_R) then
         CastSpellTarget(myHero.Addr, _R)
         end 
