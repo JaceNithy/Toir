@@ -32,6 +32,7 @@ function Lulu:Support()
     self.lastAttack = 0
     self.lastAttackCD = 0
     self.lastWindUpTime = 0
+    self.ts_prio = {}
     --self.PixPosition = nil
     self.eneplayeres = {}
     self.ToInterrupt = {}
@@ -83,7 +84,13 @@ function Lulu:Support()
     ["rocketgrabmissile"] 			= {},
 	}
 --------------------------------------------------
-  
+   self.priorityTable = {
+    p5 = {"Alistar", "Amumu", "Blitzcrank", "Braum", "ChoGath", "DrMundo", "Garen", "Gnar", "Hecarim", "Janna", "JarvanIV", "Leona", "Lulu", "Malphite", "Nami", "Nasus", "Nautilus", "Nunu","Olaf", "Rammus", "Renekton", "Sejuani", "Shen", "Shyvana", "Singed", "Sion", "Skarner", "Sona","Soraka", "Taric", "Thresh", "Volibear", "Warwick", "MonkeyKing", "Yorick", "Zac", "Zyra"},
+    p4 = {"Aatrox", "Darius", "Elise", "Evelynn", "Galio", "Gangplank", "Gragas", "Irelia", "Jax","LeeSin", "Maokai", "Morgana", "Nocturne", "Pantheon", "Poppy", "Rengar", "Rumble", "Ryze", "Swain","Trundle", "Tryndamere", "Udyr", "Urgot", "Vi", "XinZhao", "RekSai"},
+    p3 = {"Akali", "Diana", "Fiddlesticks", "Fiora", "Fizz", "Heimerdinger", "Jayce", "Kassadin","Kayle", "KhaZix", "Lissandra", "Mordekaiser", "Nidalee", "Riven", "Shaco", "Vladimir", "Yasuo","Zilean"},
+    p2 = {"Ahri", "Anivia", "Annie",  "Brand",  "Cassiopeia", "Karma", "Karthus", "Katarina", "Kennen", "Sejuani",  "Lux", "Malzahar", "MasterYi", "Orianna", "Syndra", "Talon",  "TwistedFate", "Veigar", "VelKoz", "Viktor", "Xerath", "Zed", "Ziggs", "Zoe" },
+    p1 = {"Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Graves", "Jinx", "Kalista", "KogMaw", "Lucian", "MissFortune", "Quinn", "Sivir", "Teemo", "Tristana", "Twitch", "Varus", "Vayne", "Xayah"},
+    }
       
     self.Q:SetSkillShot(0.54, math.huge, 200, false)
     self.Q2:SetSkillShot(0.54, math.huge, 200, false)
@@ -96,7 +103,7 @@ function Lulu:Support()
     Callback.Add("DrawMenu", function(...) self:OnDrawMenu(...) end)
     --Callback.Add("UpdateBuff", function(...) self:OnUpdateBuff(...) end)
     --Callback.Add("RemoveBuff", function(...) self:OnRemoveBuff(...) end)
-    --Callback.Add("CreateObject", function(...) self:OnCreateObject(...) end)
+    Callback.Add("CreateObject", function(...) self:OnCreateObject(...) end)
 	--Callback.Add("DeleteObject", function(...) self:OnDeleteObject(...) end)
     Callback.Add("ProcessSpell", function(...) self:OnProcessSpell(...) end)
   
@@ -134,7 +141,6 @@ function Lulu:EveMenus()
     self.CRIsMY = self:MenuBool("Use R Is My", true)
     self.UseRmy = self:MenuSliderInt("HP Minimum %", 30)
 
-
     --KillSteal [[ Lulu ]]
     self.KQ = self:MenuBool("KillSteal > Q", true)
     self.KE = self:MenuBool("KillSteal > E", true)
@@ -148,7 +154,7 @@ function Lulu:EveMenus()
     self.UseEmy = self:MenuSliderInt("HP Minimum %", 30)
 
     --Draws [[ Lulu ]]
-    self.DQWER = self:MenuBool("Draw On/Off", true)
+    self.DQWER = self:MenuBool("Draw On/Off", false)
     self.DQ = self:MenuBool("Draw Q", true)
     self.DE = self:MenuBool("Draw E", true)
     self.DR = self:MenuBool("Draw R", true)
@@ -157,6 +163,7 @@ function Lulu:EveMenus()
     --Misc [[ Lulu ]]
     self.Inpt = self:MenuBool("Interrupt {E}", true)
     self.AntiGapclose = self:MenuBool("AntiGapclose [Q]", true)
+    self.AntiGapcloseW = self:MenuBool("AntiGapclose [W]", true)
 
     --self.LogicR = self:MenuBool("Use Logic R?", true)]]
 
@@ -188,7 +195,7 @@ function Lulu:OnDrawMenu()
             self.CRIsMY = Menu_Bool("Use R Is My", self.CRIsMY, self.menu)
             self.UseRmy = Menu_SliderInt("My HP Minimum %", self.UseRmy, 0, 100, self.menu)
 			Menu_End()
-        end
+		end
         if Menu_Begin("KillSteal") then
             self.KQ = Menu_Bool("KillSteal > Q", self.KQ, self.menu)
             self.KE = Menu_Bool("KillSteal > E", self.KE, self.menu)
@@ -205,7 +212,8 @@ function Lulu:OnDrawMenu()
         end
         if Menu_Begin("Misc") then
             self.AntiGapclose = Menu_Bool("AntiGapclose Q",self.AntiGapclose,self.menu)
-            self.Inpt = Menu_Bool("Interrupt E",self.Inpt,self.menu)
+            self.AntiGapcloseW = Menu_Bool("AntiGapclose W",self.AntiGapcloseW,self.menu)
+            self.Inpt = Menu_Bool("Interrupt W",self.Inpt,self.menu)
 			Menu_End()
         end
 		if Menu_Begin("KeyStone") then
@@ -235,15 +243,15 @@ function Lulu:OnDraw()
 end 
 
 function Lulu:OnProcessSpell(unit, spell)
-	if spell and unit.IsEnemy and IsValidTarget(unit.Addr, self.E.range) and self.E:IsReady() then
+	if spell and unit.IsEnemy and IsValidTarget(unit.Addr, self.W.range) and self.W:IsReady() then
   		if self.Spells[spellName] ~= nil then
-	    	CastSpellTarget(unit.Addr, _E)
+	    	CastSpellTarget(unit.Addr, _W)
 	    end
     end
 	if spell and unit.IsEnemy then
         if self.listSpellInterrup[spell.Name] ~= nil then
-			if IsValidTarget(unit.Addr, self.E.range) then
-				CastSpellTarget(unit.Addr, _E)
+			if IsValidTarget(unit.Addr, self.W.range) then
+				CastSpellTarget(unit.Addr, _W)
 			end
 		end
     end
@@ -334,6 +342,24 @@ function Lulu:ComboLulu()
     end
 end 
 
+function Lulu:OnCreateObject(obj)
+    for i, heros in ipairs(GetEnemyHeroes()) do
+		if heros ~= nil then
+			local hero = GetAIHero(heros)
+            heroPos = Vector(hero.x, hero.y, hero.z)
+            if (hero.Name == "Rengar" or hero.Name == "Khazix") and hero.IsValid then
+				if obj.Name == "Rengar_LeapSound.troy" and GetDistance(heroPos) < self.W.range then
+					CastSpellTarget(hero.Addr, _W)
+				end
+
+				if obj.Name == "Khazix_Base_E_Tar.troy" and GetDistance(heroPos) < 300 then
+					CastSpellTarget(hero.Addr, _W)
+				end
+			end
+		end
+	end
+end 
+
 function Lulu:OnTick()
     if IsDead(myHero.Addr) or IsTyping() or IsDodging() then return end
 
@@ -341,6 +367,7 @@ function Lulu:OnTick()
     --self:CheckRAllies()
     self:CastR()
     self:CastRIsMy()
+    --self:CancellRengarandKhazix()
 
     if GetKeyPress(self.Combo) > 0 then	
         --self:ExtendedQ()
@@ -428,15 +455,15 @@ function Lulu:CastR()
     local UseR = GetTargetSelector(900)
     Enemy = GetAIHero(UseR)
     for i,hero in pairs(GetAllyHeroes()) do
-        if hero ~= nil then
+        if hero ~= 0 then
             ally = GetAIHero(hero)
             if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.R.range and CountEnemyChampAroundObject(Enemy, self.R.range) < self.UseRange then
                 if self.UseRally >= ally.HP / ally.MaxHP * 100 then
                     CastSpellTarget(ally.Addr, _R)
                 end
 			end
-		end
-	end
+        end
+    end 
 end
 
 function Lulu:CastRIsMy()
