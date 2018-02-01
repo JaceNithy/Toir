@@ -205,7 +205,7 @@ function Lulu:OnDrawMenu()
         end
         if Menu_Begin("Misc") then
             self.AntiGapclose = Menu_Bool("AntiGapclose Q",self.AntiGapclose,self.menu)
-            self.Interrupt = Menu_Bool("Interrupt E",self.Interrupt,self.menu)
+            self.Inpt = Menu_Bool("Interrupt E",self.Inpt,self.menu)
 			Menu_End()
         end
 		if Menu_Begin("KeyStone") then
@@ -240,7 +240,6 @@ function Lulu:OnProcessSpell(unit, spell)
 	    	CastSpellTarget(unit.Addr, _E)
 	    end
     end
-
 	if spell and unit.IsEnemy then
         if self.listSpellInterrup[spell.Name] ~= nil then
 			if IsValidTarget(unit.Addr, self.E.range) then
@@ -248,6 +247,18 @@ function Lulu:OnProcessSpell(unit, spell)
 			end
 		end
     end
+    if unit.IsEnemy and unit.Type == 0 then
+		for i, heros in ipairs(GetAllyHeroes()) do
+		if heros ~= nil then
+			local target  = GetAIHero(heros)
+			if target  and target.Id == spell.TargetId then
+				if IsValidTarget(target , self.E.range) and CanCast(_E) then
+					CastSpellTarget(target.Addr,_E)
+				end
+			end
+		end
+	end
+	end
 end 
 
 function PredictPixPosition(Target)
@@ -290,6 +301,27 @@ function Lulu:ProcessPix()
 	end
 end
 
+--[[function Lulu:LogicW()
+    local TargetW = GetTargetSelector(self.W.range)
+    for i,hero in pairs(GetAllyHeroes()) do
+        if hero ~= nil then
+            ally = GetAIHero(hero)
+            if not ally.IsMe and not Ally.IsDead 
+
+    end 
+end]] 
+
+function Lulu:LogicE()
+    for i,hero in pairs(GetAllyHeroes()) do
+        if hero ~= nil then
+        ally = GetAIHero(hero)
+        if not ally.IsMe and ally.IsDead and GetDistance(ally.Addr) < self.E.range then
+        CastSpellTarget(ally.Addr, _E)
+        end 
+        end 
+    end   
+end 
+
 function Lulu:ComboLulu()
     if self.CQ then
         self:RegularQ()
@@ -297,51 +329,24 @@ function Lulu:ComboLulu()
     if self.CE then
         self:LogicE()
     end 
+    --[[if self.CW then
+        self:LogicW()
+    end]]
 end 
 
 function Lulu:OnTick()
     if IsDead(myHero.Addr) or IsTyping() or IsDodging() then return end
 
     self:ProcessPix()
-    self:CheckRAllies()
-    self:LogicW()
+    --self:CheckRAllies()
     self:CastR()
     self:CastRIsMy()
 
     if GetKeyPress(self.Combo) > 0 then	
-        self:ExtendedQ()
+        --self:ExtendedQ()
 		self:ComboLulu()
     end
 end 
-
-function Lulu:GetEnemyHeroes()
-    SearchAllChamp()
-    local t = pObjChamp
-
-    local result = {}
-
-    for i, v in pairs(t) do
-            if IsEnemy(v) and IsChampion(v) then
-                    table.insert(result, v)
-            end
-    end
-    return result
-end
-
-function Lulu:GetAllyHeroes()
-    SearchAllChamp()
-    local t = pObjChamp
-
-    local result = {}
-
-    for i, v in pairs(t) do
-            if IsAlly(v) and IsChampion(v) then
-                    table.insert(result, v)
-            end
-    end
-
-    return result
-end
 
 function Lulu:LogicE()
 	if self.AutoEShild then
@@ -351,22 +356,22 @@ function Lulu:LogicE()
 				if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.E.range then
 					if self.AutoEShild then
 						if CountBuffByType(ally.Addr, 5) > 0 or CountBuffByType(ally.Addr, 5) > 0 then
-							CastSpellToPos(ally.x, ally.z, _E)
+							CastSpellTarget(ally.Addr, _E)
 						end
 					end
-					local nearEnemys = CountEnemyChampAroundObject(ally.Addr, 900)
+					local nearEnemys = CountEnemyChampAroundObject(ally.Addr, 650)
 					if nearEnemys >= self.UseRange then
-						CastSpellToPos(ally.x, ally.z, _E)
+						CastSpellTarget(ally.Addr, _E)
 					end
 					if self.UseEally >= ally.HP / ally.MaxHP * 100 then
-						CastSpellToPos(ally.x, ally.z, _E)
+						CastSpellTarget(ally.Addr, _E)
 					end
 				end
 			end
 		end
     end  
 	if myHero.HP / myHero.HP * 100 <= self.UseEmy then
-		CastSpellToPos(myHero.x, myHero.z, _E)
+		CastSpellTarget(myHero.Addr, _E)
 	end
 end
 
@@ -393,39 +398,38 @@ function Lulu:CheckRAllies(Hits)
 end 
 
 function Lulu:CastR()
-    for i, heros in ipairs(GetAllyHeroes()) do
-		if heros ~= 0 then
-			local Allys = GetAIHero(heros)
-			if IsValidTarget(Allys, self.R.range) and Allys.HP / Allys.MaxHP * 100 <= self.UseRally then
-				if CanCast(_R) then
-					CastSpellTarget(Allys.Addr, _R)
-				end
+    for i,hero in pairs(GetAllyHeroes()) do
+        if hero ~= nil then
+            ally = GetAIHero(hero)
+            if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.R.range then
+                if self.UseRally >= ally.HP / ally.MaxHP * 100 then
+                    CastSpellTarget(ally.Addr, _R)
+                end
 			end
 		end
 	end
 end
 
 function Lulu:CastRIsMy()
-	if GetPercentHP(myHero.Addr) <= self.UseRmy then
+	if GetPercentHP(myHero.Addr) <= self.UseRmy and CountEnemyChampAroundObject(target, self.R.range) < 1 then
 		if CanCast(_R) then
         CastSpellTarget(myHero.Addr, _R)
         end 
     end 	
 end
 
-function Lulu:RegularQ(Target)
-    local target = GetTargetSelector(1100)
-    Enemy = GetAIHero(target)
-	if not self.Q:IsReady() then return end
-	if Enemy ~= nil and GetDistance(Enemy.Addr) < 1100 and IsValidTarget(Enemy, self.Q.range) and not Enemy.IsDead then
-			local CastPosition, HitChance, Position = self.Predc:GetLineCastPosition(Target, self.Q.delay, self.Q.width, self.Q.range, self.Q.speed, myHero, false)
-			if Hitchance >= 2 and GetDistance(CastPosition) < self.Q.Range then
-				CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
-        end 
+function Lulu:RegularQ()
+    local TargetQ = GetTargetSelector(self.Q.range)
+	if CanCast(_Q) and self.CQ and TargetQ ~= 0 then
+		target = GetAIHero(TargetQ)
+		local CastPosition, HitChance, Position = self.Predc:GetLineCastPosition(target, self.Q.delay, self.Q.width, self.Q.range, self.Q.speed, myHero, false)
+		if HitChance >= 2 then
+			CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
+        end
     end 
-end
+end 
 
-function Lulu:ExtendedQ()
+--[[function Lulu:ExtendedQ()
 	local target = GetTargetSelector(1700)
     Enemy = GetAIHero(target)
     if not self.Q:IsReady() then return end	
@@ -483,4 +487,4 @@ function Lulu:ExtendedQ()
 			local ToCastPosition = Vector(myHero) + Vector(Vector(CastPosition) - Vector(myHero)):Normalized()*(self.Q.range-10)
 		CastSpellToPos(ToCastPosition.x, ToCastPosition.z, _Q)
 	end
-end 
+end ]]
