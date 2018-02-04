@@ -214,7 +214,7 @@ function Azir:FleeAzir()
     local movePos = myHero + (Vector(mousePos) - myHero):normalized() * self.Q.range
     if movePos then
       CastSpellTarget(self.soldierToDash, _E, true)
-      DelayAction(function() CastSpellToPos(movePos _Q) end, 0.25)
+      DelayAction(function() CastSpellToPos(movePos, _Q) end, 0.25)
       DelayAction(function() self.soldierToDash = nil end)
     end
   end
