@@ -369,11 +369,13 @@ function Lulu:OnTick()
 end 
 
 function Lulu:LogicE()
-	if self.AutoEShild then
+    if self.AutoEShild then
+        local UseE = GetTargetSelector(self.E.range)
+        Enemy = GetAIHero(UseE)
 		for i,hero in pairs(GetAllyHeroes()) do
 			if hero ~= nil then
 				ally = GetAIHero(hero)
-				if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.E.range then
+				if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.E.range and IsValidTarget(Enemy, 900) then
 					if self.AutoEShild then
 						if CountBuffByType(ally.Addr, 5) > 0 or CountBuffByType(ally.Addr, 5) > 0 then
 							CastSpellTarget(ally.Addr, _E)
@@ -396,11 +398,13 @@ function Lulu:LogicE()
 end
 
 function Lulu:LogicW()
-	if self.AutoWShild then
+    if self.AutoWShild then
+        local UseW = GetTargetSelector(self.W.range)
+        Enemy = GetAIHero(UseW)
 		for i,hero in pairs(GetAllyHeroes()) do
 			if hero ~= nil then
 				ally = GetAIHero(hero)
-				if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.W.range then
+				if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.W.range and IsValidTarget(Enemy, 900) then
 					if self.AutoWShild then
 						if CountBuffByType(ally.Addr, 5) > 0 or CountBuffByType(ally.Addr, 5) > 0 then
 							CastSpellTarget(ally.Addr, _W)
