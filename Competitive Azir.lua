@@ -159,7 +159,7 @@ function Azir:OnDraw()
 end 
 
 function Azir:ComboAzir()
-    local targetcombo = GetTargetSelector(1700)
+    local targetcombo = GetTargetSelector()
     Enemy = GetAIHero(targetcombo)
     if targetcombo ~= 0 then
     if self.CQ and self.CW and self.W:IsReady() and GetDistance(Enemy) < self.Q.range then
@@ -195,27 +195,53 @@ function Azir:ComboAzir()
     end
 end 
 
-function Azir:FleeAzir()
-  local mousePos = Vector(GetMousePos())
-  MoveToPos(mousePos.x,mousePos.z)
-  if self:CountSoldiers() > 0 then
-    for _, k in pairs(self.objHolder) do
-      if not self.soldierToDash then
-        self.soldierToDash = k
-      elseif self.soldierToDash and GetDistanceSqr(k,mousePos) < GetDistanceSqr(self.soldierToDash,mousePos) then
-        self.soldierToDash = k
-      end
+local function GetDistanceSqr(p1, p2)
+  p2 = GetOrigin(p2) or GetOrigin(myHero)
+  return (p1.x - p2.x) ^ 2 + ((p1.z or p1.y) - (p2.z or p2.y)) ^ 2
+end
+
+
+function Azir:IsUnderAllyTurret(pos)
+  GetAllUnitAroundAnObject(myHero.Addr, 2000)
+for k,v in pairs(pUnit) do
+  if not IsDead(v) and IsTurret(v) and IsAlly(v) and GetTargetableToTeam(v) == 4 then
+    local turretPos = Vector(GetPosX(v), GetPosY(v), GetPosZ(v))
+    if GetDistanceSqr(turretPos,pos) < 915 ^ 2 then
+      return true
     end
   end
-  if not self.soldierToDash and self.W:IsReady() then
-    CastSpellTarget(_W, mousePos)
-  end
-  if self:CountSoldiers() > 0 and self.soldierToDash then
-    local movePos = myHero + (Vector(mousePos) - myHero):normalized() * self.Q.range
+end
+  return false
+end
+
+function Azir:FleeAzir()
+  local mousePos = GetMousePos()
+     MoveToPos(mousePos.x,mousePos.z)
+     local myHeroPos = Vector(myHero)
+  if self.soldierToDash then
+    local movePos = Vector(myHero) + (Vector(mousePos) - Vector(myHero)):Normalized()*950
+    local istorre = self:IsUnderAllyTurret()
+    local possiblePos = myHeroPos:Extended(mousePos, self.Q.range) 
     if movePos then
-      CastSpellTarget(self.soldierToDash, _E, true)
-      DelayAction(function() CastSpellToPos(movePos, _Q) end, 0.25)
-      DelayAction(function() self.soldierToDash = nil end)
+      if self.E:IsReady() and self.Q:IsReady() then
+        CastSpellTarget(self.soldierToDash.Addr, _E)
+      DelayAction(function() CastSpellToPos(possiblePos.x, possiblePos.z, _Q) end, 150)
+elseif self.E:IsReady() then
+  CastSpellTarget(self.soldierToDash.Addr, _E)
+      end
+    end
+  elseif self:CountSoldiers() > 0 then
+    for _,Soldier in pairs(self.objHolder) do
+      if not self.soldierToDash then
+        self.soldierToDash = Soldier
+      elseif self.soldierToDashand and GetDistanceSqr(Soldier,mousePos) < GetDistanceSqr(self.soldierToDash, mousePos) then
+        self.soldierToDash = Soldier
+      end
+    end
+  elseif self.W:IsReady() then 
+    local movePos = Vector(myHero) + (Vector(mousePos) - Vector(myHero)):Normalized()*450
+    if movePos then
+    CastSpellToPos(movePos.x, movePos.y, _W) 
     end
   end
 end
@@ -263,7 +289,7 @@ function Azir:InsecAzir()
        local movePos = myHero + (Vector(enemy) - myHero):Normalized() * self.Q.range + (Vector(enemy) - myHero):Normalized() * self.W.width
        if movePos then
         CastSpellToPos(movePos.x, movePos.z, _Q)
-        CastSpellTarget(self.soldierToDash, _E)
+        CastSpellTarget(self.soldierToDash.Addr, _E)
          DelayAction(function() CastSpellToPos(mousePos.x, mousePos.z, _R) end, 1)
          DelayAction(function() self.soldierToDash = nil end, 2)
        end
