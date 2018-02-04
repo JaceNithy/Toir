@@ -312,17 +312,6 @@ end
     end 
 end]] 
 
-function Lulu:LogicE()
-    for i,hero in pairs(GetAllyHeroes()) do
-        if hero ~= nil then
-        ally = GetAIHero(hero)
-        if not ally.IsMe and ally.IsDead and GetDistance(ally.Addr) < self.E.range then
-        CastSpellTarget(ally.Addr, _E)
-        end 
-        end 
-    end   
-end 
-
 function Lulu:ComboLulu()
     if self.CQ then
         self:RegularQ()
