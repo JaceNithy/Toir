@@ -1,3 +1,5 @@
+--REFERENCE: https://github.com/yfdert88/GoS/blob/master/Jhin.lua
+
 IncludeFile("Lib\\TOIR_SDK.lua")
 
 Jhin = class()
