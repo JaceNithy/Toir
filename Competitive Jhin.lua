@@ -1,4 +1,4 @@
---REFERENCE: https://github.com/yfdert88/GoS/blob/master/Jhin.lua
+--REFERENCE: https://github.com/BluePrinceEB/GoS/blob/master/Jhin.lua
 
 IncludeFile("Lib\\TOIR_SDK.lua")
 
