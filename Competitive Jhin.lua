@@ -12,7 +12,7 @@ function Jhin:Assasin()
 
     self.Predc = VPrediction(true)
 
-    self.WBuff = false
+    self.WBuff = nil
 	self.WEndBuff = 0
 	self.WTimer = nil
     self.Trinity = false
@@ -42,8 +42,8 @@ function Jhin:Assasin()
     Callback.Add("DrawMenu", function(...) self:OnDrawMenu(...) end)
     --Callback.Add("Update", function(...) self:OnUpdate(...) end)
     Callback.Add("ProcessSpell", function(...) self:OnProcessSpell(...) end)
-    Callback.Add("UpdateBuff", function(...) self:OnUpdateBuff(...) end)
-    Callback.Add("RemoveBuff", function(...) self:OnRemoveBuff(...) end)
+    Callback.Add("UpdateBuff", function(unit, buff, stacks) self:OnUpdateBuff(source, unit, buff, stacks) end)
+    Callback.Add("RemoveBuff", function(unit, buff) self:OnRemoveBuff(unit, buff) end)
   
   end 
 
@@ -97,6 +97,10 @@ function Jhin:EveMenus()
 	self.Combo = self:MenuKeyBinding("Combo", 32)
     self.LaneClear = self:MenuKeyBinding("Lane Clear", 86)
     self.AUJ = self:MenuKeyBinding("Acclaim", 65)
+end
+
+function Jhin:IsMarked(target)
+    return target.HasBuff("jhinespotteddebuff")
 end
 
 function Jhin:OnDrawMenu()
@@ -315,7 +319,7 @@ end
 function Jhin:AutoWIsMarked()
     local UseW = GetTargetSelector(self.W.range)
     target = GetAIHero(UseW)
-	if UseW ~= 0 and self.WBuff and IsValidTarget(target, self.W.range) and CanCast(_W) then
+	if UseW ~= 0 and self:IsMarked(target) and IsValidTarget(target, self.W.range) and CanCast(_W) then
         local CastPosition, HitChance, Position = self.Predc:GetLineCastPosition(target, self.W.delay, self.W.width, self.W.range, self.W.speed, myHero, false)
         if HitChance >= 2 then
 			CastSpellToPos(CastPosition.x, CastPosition.z, _W)
@@ -365,7 +369,7 @@ function Jhin:UtimateJhin()
 end
 
 
-function Jhin:OnUpdateBuff(unit, buff)
+function Jhin:OnUpdateBuff(source, unit, buff, stacks)
     if unit.IsMe and buff.Name == "JhinPassiveReload" then
 		self.Reload = true
     end
@@ -374,7 +378,7 @@ function Jhin:OnUpdateBuff(unit, buff)
 		if self.E:IsReady() and GetDistance(unit) <= self.E.range then CastSpellToPos(unit.x, unit.z, _E) end
     end
     if unit.IsEnemy and buff.Name == "jhinespotteddebuff" then
-        self.WBuff = true
+        self.WBuff = unit
         self.WEndBuff = GetTimeGame()
     end
 end
@@ -384,7 +388,7 @@ function Jhin:OnRemoveBuff(unit, buff)
 		self.Reload = false
     end
     if unit.IsEnemy and buff.Name == "jhinespotteddebuff" then
-        self.WBuff = false
+        self.WBuff = nil
         self.WEndBuff = 0
     end
 end
