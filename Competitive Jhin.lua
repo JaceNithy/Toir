@@ -310,7 +310,7 @@ function Jhin:AtivandoUti()
         local TargetR = GetTargetSelector(self.R.range)
        if CanCast(_R) and TargetR ~= 0 then
         target = GetAIHero(TargetR)
-        local CastPosition, HitChance, Position = self.Predc:GetLineCastPosition(target, self.R.delay, self.R.width, self.R.range, self.R.speed, myHero, false)
+        local CastPosition, HitChance, Position = self.Predc:GetConeAOECastPosition(target, self.R.delay, self.R.width, self.R.range, self.R.speed, myHero, false)
 		if HitChance >= 2 then
 			CastSpellToPos(CastPosition.x, CastPosition.z, _R)
 		  end
@@ -363,7 +363,7 @@ function Jhin:UtimateJhin()
 	local UseR = GetTargetSelector(self.R.range)
 	if self.UtimateOn and self.CR and CanCast(_R) and UseR ~= 0 then
 		target = GetAIHero(UseR)
-		local CastPosition, HitChance, Position = self.Predc:GetLineCastPosition(target, self.R.delay, self.R.width, self.R.range, self.R.speed, myHero, false)
+		local CastPosition, HitChance, Position = self.Predc:GetConeAOECastPosition(target, self.R.delay, self.R.width, self.R.range, self.R.speed, myHero, false)
 		if HitChance >= 2 then
 			CastSpellToPos(CastPosition.x, CastPosition.z, _R)
 		end
