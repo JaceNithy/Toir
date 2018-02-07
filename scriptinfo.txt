@@ -5,5 +5,5 @@ https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20Thresh.lua
 https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20Urgot.lua
 https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20XinZhao.lua
 https://raw.githubusercontent.com/JaceNithy/Toir/master/Competitive%20Yasuo.lua
-https://raw.githubusercontent.com/JaceNithy/Toir/master/Nasus.lua
-https://raw.githubusercontent.com/JaceNithy/Toir/master/Nautilus.lua
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Nasus.lua#0000000000000#Scripts
+https://raw.githubusercontent.com/JaceNithy/Toir/master/Nautilus.lua#0000000000000#Scripts
