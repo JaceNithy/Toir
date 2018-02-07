@@ -122,6 +122,25 @@ function CompYasuo:Competitive()
     self.customQ3valid = 0
     self.customEvalid = 0
     self.customScalar = 0
+
+    self.OnPostAttackCallbacks = {};
+    self.AfterAttackCallbacks = {}
+    self.OnAttackCallbacks = {}
+    self.BeforeAttackCallbacks = {}
+    self.ActiveAttacks = {}
+    self.enemyMinions = {}
+    self.OnPostAttackCallbacks = {};
+    self.MyHeroIsAutoAttacking = false;
+
+    self.Attacks = true
+    self.Move = true
+    self.LastAATick = 0
+    self.LastMoveCommandPosition = Vector({0,0,0})
+    self.LastMoveCommandT = 0
+    self.LastAttackCommandT = 0
+    self._minDistance = 400
+    self._missileLaunched = false
+    self.AA = {LastTime = 0, LastTarget = nil, IsAttacking = false, Object = nil}
   
     --Passive Yasuo
     self.CheckQ3 = false
@@ -153,6 +172,7 @@ function CompYasuo:Competitive()
     Callback.Add("DrawMenu", function(...) self:OnDrawMenu(...) end)
     Callback.Add("Update", function(...) self:OnUpdate(...) end)
     Callback.Add("ProcessSpell", function(...) self:OnProcessSpell(...) end)
+    --Callback.Add("PlayAnimation", function(...) self:OnPlayAnimation(...) end)
     --Callback.Add("UpdateBuff", function(...) self:OnUpdateBuff(...) end)
     --Callback.Add("RemoveBuff", function(...) self:OnRemoveBuff(...) end)
     self:VaisefuderMenu()
@@ -244,6 +264,41 @@ function CompYasuo:OnDrawMenu()
 	end
 end
 
+--[[function CompYasuo:OnPlayAnimation(unit, anim)
+    if unit.IsMe and myHero.CharName == "Yasuo" then
+
+        if anim == "Spell3" or anim == "Spell3withReload" then
+            DelayAction(function() self:ResetAutoAttackTimer() end, 0)
+        end
+    end
+    if unit.IsMe then
+    	if anim:lower():find("attack") == 1 and GetTimeGame() - self.AA.LastTime + GetLatency() >= 1 * self:AnimationTimeOrb() - 25/1000 then
+            self.AA.IsAttacking = true
+            self.AA.LastTime = GetTimeGame() - GetLatency()
+        end
+    end
+end]]
+
+function CompYasuo:ResetAutoAttackTimer()
+    self.LastAATick = 0
+end
+
+function CompYasuo:DisableAttacks()
+    self.Attacks = false
+end
+
+function CompYasuo:EnableAttacks()
+    self.Attacks = true
+end
+
+function CompYasuo:GameTimeTickCount()
+    return GetTimeGame()
+end
+
+function CompYasuo:GamePing()
+    return GetLatency() / 2000
+end
+
 
 --[[function CompYasuo:OnUpdateBuff(unit, buff)
     if unit.IsMe and buff.Name == "YasuoQW" then
@@ -269,8 +324,9 @@ function CompYasuo:OnRemoveBuff(unit, buff)
     end 
 end ]]
 
-function CompYasuo:DashEndPos(target)
+function CompYasuo:DashEndPos(tar)
     local Estent = 0
+    target = GetAIHero(tar)
     if GetDistance(target) < 500 then
         Estent = Vector(myHero):Extended(Vector(target), 475)
     else
@@ -281,22 +337,19 @@ end
 
 function CompYasuo:GetGapMinion(target)
     local bestMinion = nil
-    local closest = math.huge
-
-    GetAllUnitAroundAnObject(myHero.Addr, 1500)
-
-    local units = pUnit
-    for i, unit in pairs(units) do
-        if unit and unit ~= 0 and IsMinion(unit) and IsEnemy(unit) and not IsDead(unit) and not IsInFog(unit) and GetTargetableToTeam(unit) == 4 and not self:Marked(GetUnit(unit)) then
-            if GetDistance(target, self:DashEndPos(GetUnit(unit))) < GetDistance(target) and GetDistance(self:DashEndPos(GetUnit(unit))) < closest then
-                bestMinion = unit
-                closest = GetDistance(self:DashEndPos(GetUnit(unit)), target)
-            end
-        end
-    end
-
-    return bestMinion
-end 
+		local closest = 0
+		GetAllUnitAroundAnObject(myHero.Addr, 1500)
+		local units = pUnit
+		for i, unit in pairs(units) do
+			if unit and unit ~= 0 and IsMinion(unit) and IsEnemy(unit) and not IsDead(unit) and not IsInFog(unit) and GetTargetableToTeam(unit) == 4 and not self:Marked(GetUnit(unit)) and GetDistance(GetUnit(unit)) < 375 then
+				if GetDistance(self:DashEndPos(GetUnit(unit)), target) < GetDistance(target) and closest < GetDistance(GetUnit(unit)) then
+					closest = GetDistance(GetUnit(unit))
+					bestMinion = unit
+				end
+			end
+		end
+		return bestMinion
+	end
 
 function CompYasuo:OnProcessSpell(unit, spell)
     if GetChampName(GetMyChamp()) ~= "Yasuo" then return end
@@ -419,13 +472,13 @@ function CompYasuo:yKillSteal()
     end 
 end 
 
-function CompYasuo:EnemyMinionsTbl() --SDK Toir+
+function CompYasuo:EnemyMinionsTbl()
     GetAllUnitAroundAnObject(myHero.Addr, 2000)
     local result = {}
     for i, obj in pairs(pUnit) do
         if obj ~= 0  then
             local minions = GetUnit(obj)
-            if IsEnemy(minions.Addr) and IsDead(minions.Addr) and not IsInFog(minions.Addr) and GetType(minions.Addr) == 1 then
+            if IsEnemy(minions.Addr) and not IsDead(minions.Addr) and not IsInFog(minions.Addr) and GetType(minions.Addr) == 1 then
                 table.insert(result, minions)
             end
         end
@@ -433,10 +486,36 @@ function CompYasuo:EnemyMinionsTbl() --SDK Toir+
     return result
 end
 
+function CompYasuo:OrbWalk(target, point)
+    if point ~= nil then
+	    if self.Attacks and self:CanAttack() and IsValidTarget(target, 1000) then
+	        self:Attack(target)
+	        MoveToPos(point.x, point.z)
+	    end
+	end
+end
+
+function CompYasuo:Attack(target)
+    BasicAttack(target)
+end
+
 function CompYasuo:LaneHave()
     for i ,minion in pairs(self:EnemyMinionsTbl()) do
         if minion ~= 0 then
-       if self.LE and IsValidTarget(minion, self.E.range) and minion.IsEnemy then
+       if self.LE and IsValidTarget(minion, self.E.range) and GetDamage("E", minion) > minion.HP and not self:IsSafe(minion) and minion.IsEnemy then
+        CastSpellTarget(minion.Addr, _E)
+       end 
+       end 
+       if CanCast(_Q) and IsValidTarget(minion, self.Q.range) and self.LQ and minion.IsEnemy then
+        CastSpellToPos(minion.x,minion.z, _Q)
+        end
+    end 
+end 
+
+function CompYasuo:LastHitE()
+    for i ,minion in pairs(self:EnemyMinionsTbl()) do
+        if minion ~= 0 then
+       if IsValidTarget(minion, self.E.range) and GetDamage("E", minion) > minion.HP and not self:IsSafe(minion) and minion.IsEnemy then
         CastSpellTarget(minion.Addr, _E)
        end 
        end 
@@ -474,13 +553,18 @@ function CompYasuo:OnTick()
         self:LaneHave()
     end 
 
+    if GetKeyPress(self.Last_Hit) > 0 then	
+        self:LastHitE()
+    end 
+
     if GetKeyPress(self.Flee_Yasuo) > 0 then	
         self:Flee()
     end
 
 	if GetKeyPress(self.Combo) > 0 then	
 		self:QPosition()
-		self:ELetion()
+        self:ECombos()
+        self:EMinion()
         self:RLost()
     end
 end 
@@ -510,22 +594,16 @@ function CompYasuo:QPosition()
     end ]]
 end 
 
-function CompYasuo:ELetion(target)
+function CompYasuo:ECombos()
     local UseE = GetTargetSelector(self.E.range)
     Enemy = GetAIHero(UseE)
-    if target and target ~= 0 and IsEnemy(target) then
+    if UseE ~= 0 then
 
         if self.E:IsReady() then
-            if self.CE and IsValidTarget(target, self.E.range) and not self:Marked(GetAIHero(target)) and GetDistance(GetAIHero(target), self:DashEndPos(GetAIHero(target))) <= GetDistance(GetAIHero(target)) then
-                CastSpellTarget(target.Addr, _E)
+            if self.CE and IsValidTarget(Enemy, self.E.range) and not self:Marked(Enemy) and self:DashEndPos(Enemy) then
+                CastSpellTarget(Enemy.Addr, _E)
             end
         end 
-    end 
-    if Enemy ~= 0 and CanCast(E) and IsValidTarget(Enemy, self.E.range) and not self.CheckQ3 then
-        local gapMinion = self:GetGapMinion(Enemy)
-            if gapMinion and gapMinion ~= 0 and not self:IsSafe(GetUnit(gapMinion)) then
-            CastSpellTarget(gapMinion, _E)
-        end
     end  
 end 
 
