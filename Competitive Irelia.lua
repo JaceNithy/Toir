@@ -9,7 +9,7 @@ function OnLoad()
 end
 
 function Irelia:Assasin()
-
+    SetPrintErrorLog(false)
     self.EnemyMinions = minionManager(MINION_ENEMY, 2000, myHero, MINION_SORT_HEALTH_ASC)
     self.Predc = VPrediction(true)
 
