@@ -7,8 +7,8 @@ local NameCreat = "Jace Nicky"
 
 function OnLoad()
     if GetChampName(GetMyChamp()) ~= "Katarina" then return end
-    __PrintTextGame("<b><font color=\"#00FF00\">Kha'Zix</font></b> " ..myHero.CharName.. "<b><font color=\"#FF0000\"> Good Game!</font></b>")
-    __PrintTextGame("<b><font color=\"#00FF00\">Kha'Zix, v</font></b> " ..ScriptXan)
+    __PrintTextGame("<b><font color=\"#00FF00\">Katarina</font></b> " ..myHero.CharName.. "<b><font color=\"#FF0000\"> Good Game!</font></b>")
+    __PrintTextGame("<b><font color=\"#00FF00\">Katarina, v</font></b> " ..ScriptXan)
     __PrintTextGame("<b><font color=\"#00FF00\">By: </font></b> " ..NameCreat)
     DanceKat:Assasin()
 end
@@ -397,7 +397,7 @@ function DanceKat:CastW(unit)
 end
 
 function DanceKat:CastR(unit)
-    if isReady(_R) and GetDistanceSqr(unit) < self.R.Range * self.R.Range and unit.HP/unit.MaxHP*100 < 100 then
+    if isReady(_R) and GetDistanceSqr(unit) < self.R.Range * self.R.Range and unit.HP/unit.MaxHP*100 < 30 then
 		CastSpellTarget(unit.Addr, _R)
 	end 
 end 
