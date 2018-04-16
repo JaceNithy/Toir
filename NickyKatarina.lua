@@ -376,7 +376,7 @@ function DanceKat:ComboKat()
             self:CastQ(target)
         end
         if self.CR then 
-            if GetDistanceSqr(myHero, target) < self.R.Range * self.R.Range and self:RTime(target) / 0.125 then
+            if GetDistanceSqr(myHero, target) < self.W.Range * self.W.Range and self:RTime(target) / 0.125 then
             self:CastR(target)
         end
         end 
