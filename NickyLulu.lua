@@ -5,8 +5,14 @@ IncludeFile("Lib\\TOIR_SDK.lua")
 
 Lulu = class()
 
+local ScriptXan = 1.4
+local NameCreat = "Jace Nicky"
+
 function OnLoad()
     if GetChampName(GetMyChamp()) == "Lulu" then
+        __PrintTextGame("<b><font color=\"#00FF00\">Champion</font></b> " ..myHero.CharName.. "<b><font color=\"#FF0000\"> Good Game!</font></b>")
+        __PrintTextGame("<b><font color=\"#00FF00\">Katarina, v</font></b> " ..ScriptXan)
+        __PrintTextGame("<b><font color=\"#00FF00\">By: </font></b> " ..NameCreat)
 		Lulu:Support()
 	end
 end
