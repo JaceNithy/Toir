@@ -7,12 +7,14 @@ Lulu = class()
 
 local ScriptXan = 1.4
 local NameCreat = "Jace Nicky"
+local SDKversion = 1.02
 
 function OnLoad()
     if GetChampName(GetMyChamp()) == "Lulu" then
         __PrintTextGame("<b><font color=\"#00FF00\">Champion</font></b> " ..myHero.CharName.. "<b><font color=\"#FF0000\"> Good Game!</font></b>")
         __PrintTextGame("<b><font color=\"#00FF00\">Katarina, v</font></b> " ..ScriptXan)
         __PrintTextGame("<b><font color=\"#00FF00\">By: </font></b> " ..NameCreat)
+        __PrintTextGame("<b><font color=\"#ff00ff\">[SDK]AntiGapcloser:</font></b> <b><font color=\"#ffffff\">Loaded! (v" .. SDKversion .. ").</font></b><b><font color=\"#ff00ff\"></font></b> </font>")
 		Lulu:Support()
 	end
 end
@@ -21,6 +23,8 @@ function Lulu:Support()
     SetLuaCombo(true)
 
     self.Predc = VPrediction(true)
+
+    AntiGap = AntiGapcloser(nil)
   
     self:EveMenus()
   
@@ -105,6 +109,7 @@ function Lulu:Support()
     Callback.Add("CreateObject", function(...) self:OnCreateObject(...) end)
 	--Callback.Add("DeleteObject", function(...) self:OnDeleteObject(...) end)
     Callback.Add("ProcessSpell", function(...) self:OnProcessSpell(...) end)
+    Callback.Add("AntiGapClose", function(target, EndPos) self:OnAntiGapClose(target, EndPos) end)
   
   end 
 
@@ -163,6 +168,7 @@ function Lulu:EveMenus()
     self.Inpt = self:MenuBool("Interrupt {E}", true)
     self.AntiGapclose = self:MenuBool("AntiGapclose [Q]", true)
     self.AntiGapcloseW = self:MenuBool("AntiGapclose [W]", true)
+    self.AntiGapcloseR = self:MenuBool("AntiGapclose [R]", true)
 
     --self.LogicR = self:MenuBool("Use Logic R?", true)]]
 
@@ -212,6 +218,7 @@ function Lulu:OnDrawMenu()
         if Menu_Begin("Misc") then
             self.AntiGapclose = Menu_Bool("AntiGapclose Q",self.AntiGapclose,self.menu)
             self.AntiGapcloseW = Menu_Bool("AntiGapclose W",self.AntiGapcloseW,self.menu)
+            self.AntiGapcloseR = Menu_Bool("AntiGapclose R",self.AntiGapcloseR,self.menu)
             self.Inpt = Menu_Bool("Interrupt W",self.Inpt,self.menu)
 			Menu_End()
         end
@@ -242,6 +249,12 @@ function Lulu:OnDraw()
 end 
 
 function Lulu:OnProcessSpell(unit, spell)
+    if unit and unit.Type == myHero.Type then
+        if spell.Name:lower():find("attack") then
+            CastSpellTarget(myHero.Addr, _E)
+        end 
+    end 
+
 	if spell and unit.IsEnemy and IsValidTarget(unit.Addr, self.W.range) and self.W:IsReady() then
   		if self.Spells[spellName] ~= nil then
 	    	CastSpellTarget(unit.Addr, _W)
@@ -267,6 +280,58 @@ function Lulu:OnProcessSpell(unit, spell)
 	end
 	end
 end 
+
+function Lulu:AntiGapCloser()
+	for i, heros in pairs(GetEnemyHeroes()) do
+    	if heros ~= nil then
+      		local hero = GetAIHero(heros)
+      		--if hero.IsDash then
+        		local TargetDashing, CanHitDashing, DashPosition = self.Predc:IsDashing(hero, 0.09, 65, 2000, myHero, false)
+        		local myHeroPos = Vector(myHero.x, myHero.y, myHero.z)
+        		if DashPosition ~= nil then
+          			if GetDistance(DashPosition) < 400 and CanCast(_W) then
+          				if self.AutoEShild then
+          					for i,hero in pairs(GetAllyHeroes()) do
+								if hero ~= nil then
+									ally = GetAIHero(hero)
+									if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.R.range + 400 then
+										CastSpellTarget(ally.Addr, _R)
+									end
+								end
+							end
+          				end
+          				if self.AntiGapclose then
+          					CastSpellToPos(DashPosition.x, DashPosition.z, _E)
+          				elseif CanCast(_Q) and self.AntiGapclose then
+          					CastSpellToPos(DashPosition.x, DashPosition.z, _Q)
+          				end 
+          			end
+        		end
+      		--end
+    	end
+	end
+end
+
+function Lulu:OnAntiGapClose(target, EndPos)
+	hero = GetAIHero(target.Addr)
+    if GetDistance(EndPos) < 500 or GetDistance(hero) < 500 then
+        if self.AutoEShild then
+          	for i,hero in pairs(GetAllyHeroes()) do
+				if hero ~= nil then
+					ally = GetAIHero(hero)
+					if not ally.IsMe and not ally.IsDead and GetDistance(ally.Addr) < self.W.range + 400 and CanCast(_W) then
+						CastSpellTarget(ally.Addr, _R)
+					end
+				end
+			end
+        end
+        if self.AntiGapclose and CanCast(_E) then
+          	CastSpellToPos(target.x, target.z, _E)
+        elseif CanCast(_Q) and self.AntiGapclose then
+          	CastSpellToPos(target.x, target.z, _Q)
+        end
+    end
+end
 
 function PredictPixPosition(Target)
 		local TargetWaypoints = self.Predc:GetCurrentWayPoints(Target)
