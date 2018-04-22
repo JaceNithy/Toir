@@ -249,11 +249,6 @@ function Lulu:OnDraw()
 end 
 
 function Lulu:OnProcessSpell(unit, spell)
-    if unit and unit.Type == myHero.Type then
-        if spell.Name:lower():find("attack") then
-            CastSpellTarget(myHero.Addr, _E)
-        end 
-    end 
 
 	if spell and unit.IsEnemy and IsValidTarget(unit.Addr, self.W.range) and self.W:IsReady() then
   		if self.Spells[spellName] ~= nil then
