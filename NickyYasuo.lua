@@ -5,7 +5,7 @@ IncludeFile("Lib\\SDK.lua")
 class "Yasuo"
 
 
-local ScriptXan = 0.4
+local ScriptXan = 1.4
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -133,8 +133,8 @@ function Yasuo:MEC()
     myHero = GetMyHero()
 
     --Spells Update Yasuo
-    self.Q = Spell({Slot = 0, SpellType = Enum.SpellType.Targetted, Range = 475, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
-    self.Q3 = Spell({Slot = 0, SpellType = Enum.SpellType.Targetted, Range = 1200, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
+    self.Q = Spell({Slot = 0, SpellType = Enum.SpellType.SkillShot, Range = 475, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
+    self.Q3 = Spell({Slot = 0, SpellType = Enum.SpellType.SkillShot, Range = 1200, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
     self.W = Spell({Slot = 1, SpellType = Enum.SpellType.SkillShot, Range = 400, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
     self.E = Spell({Slot = 2, SpellType = Enum.SpellType.Targetted, Range = 475})
     self.R = Spell({Slot = 3, SpellType = Enum.SpellType.Active, Range = 1400})
@@ -147,9 +147,6 @@ function Yasuo:MEC()
     self:EveMenus()
 
     AddEvent(Enum.Event.OnTick, function(...) self:OnTick(...) end)
-    AddEvent(Enum.Event.OnUpdateBuff, function(...) self:OnUpdateBuff(...) end)
-    --AddEvent(Enum.Event.OnCreateObject, function(...) self:OnCreateObject(...) end)
-    --AddEvent(Enum.Event.OnDeleteObject, function(...) self:OnDeleteObject(...) end)
     AddEvent(Enum.Event.OnProcessSpell, function(...) self:OnProcessSpell(...) end) 
     AddEvent(Enum.Event.OnDraw, function(...) self:OnDraw(...) end)
     AddEvent(Enum.Event.OnDrawMenu, function(...) self:OnDrawMenu(...) end)  
@@ -292,27 +289,19 @@ function Yasuo:IsMarked(target)
 end
 
 function Yasuo:OnProcessSpell(unit, spell)
-    --[[for i, enemys in pairs(self:GetEnemyHeroes()) do
-    target = GetAIHero(enemys)
-    if target ~= nil then]]
-    local DGQ = self.Q:GetDamage(unit)  
-    local DGW = self.R:GetDamage(unit)
-    local DGE = self.E:GetDamage(unit)
-    if self.CanItem and CountBuffByType(unit.Addr, 29) > 0 or CountBuffByType(unit.Addr, 30) > 0 and (DGW + DGQ + DGE > unit.HP) and not self:IsUnderTurretEnemy(unit) then
-        CastSpellTarget(myHero.Addr, _R) 
-    end 
+    if GetChampName(GetMyChamp()) ~= "Yasuo" then return end
     if spell and unit.IsEnemy then 
-        if myHero == spell.target and spell.Name:lower():find("attack") and (unit.AARange >= 450 or unit.IsRanged) then
+        if unit.Type == spell.target and spell.Name:lower():find("attack") and (unit.AARange >= 450 or unit.IsRanged) then
             local wPos = Vector(myHero) + (Vector(unit) - Vector(myHero)):Normalized() * self.W.Range
             CastSpellToPos(wPos.x, wPos.z, _W)
         end
-        if unit.IsEnemy then
-            spell.endPos = {x=spell.DestPos_x, y=spell.DestPos_y, z=spell.DestPos_z}
+    end 
+    if unit.IsEnemy then
+        spell.endPos = {x=spell.DestPos_x, y=spell.DestPos_y, z=spell.DestPos_z}
            if self.W_SPELLS[spell.Name] and not unit.IsMe and GetDistance(unit) <= GetDistance(unit, spell.endPos) then
-               CastSpellToPos(unit.x, unit.z, _W)
-           end 
-       end
-    end
+            CastSpellToPos(unit.x, unit.z, _W)
+        end 
+    end 
 end 
 
 function Yasuo:OnDraw()
@@ -412,20 +401,6 @@ function Yasuo:JungleTbl() -- SDK Toir+
     return result
 end
 
-function Yasuo:OnUpdateBuff(unit, buff)
-    local DGQ = self.Q:GetDamage(target)  
-    local DGW = self.R:GetDamage(target)
-    local DGE = self.E:GetDamage(target)
-    if self.CanItem and self.CCType[buff.Type] then
-        for i, enemys in pairs(self:GetEnemyHeroes()) do
-            target = GetAIHero(enemys)
-                if target ~= 0 and (DGW + DGQ + DGE > target.HP) and not self:IsUnderTurretEnemy(target) then 
-                CastSpellTarget(target.Addr, _R)
-            end 
-        end 
-    end 
-end  
-
 function Yasuo:DashEndPos(target)
     local Estent = 0
 
@@ -503,7 +478,7 @@ function Yasuo:LastOeste()
     local DGQ = self.E:GetDamage(minion)  
     if self.LE then
         self:DisableEOW()
-        for i ,P in pairs(self:EnemyMinionsTbl()) do
+        for i ,P in pairs(self:EnemyMinionsTbl(1000)) do
             if P ~= 0 then
                 minion = GetUnit(P)
                 if GetDistance(minion) < self.E.Range and DGQ > minion.HP and not self:IsUnderTurretEnemy(P.Addr) then
@@ -519,7 +494,7 @@ end
 function Yasuo:LC()
     local DGQ = self.E:GetDamage(minion)  
     if self.LE then
-        for i ,P in pairs(self:EnemyMinionsTbl()) do
+        for i ,P in pairs(self:EnemyMinionsTbl(1000)) do
             if P ~= 0 then
                 minion = GetUnit(P)
                 if GetDistance(minion) < self.E.Range and DGQ > minion.HP and not self:IsUnderTurretEnemy(minion) then
@@ -529,7 +504,7 @@ function Yasuo:LC()
         end 
     end 
     if self.LQ then
-        for i ,P in pairs(self:EnemyMinionsTbl()) do
+        for i ,P in pairs(self:EnemyMinionsTbl(1000)) do
             if P ~= 0 then
                 minion = GetUnit(P)
                 if GetDistance(minion) < self.Q.Range and not myHero.IsDash then
@@ -539,7 +514,7 @@ function Yasuo:LC()
         end 
     end 
     if myHero.HasBuff("YasuoQ3W") and self.LQ3 and not myHero.IsDash then
-        for i ,P in pairs(self:EnemyMinionsTbl()) do
+        for i ,P in pairs(self:EnemyMinionsTbl(1000)) do
             if P ~= 0 then
                 minion = GetUnit(P)
                 if GetDistance(minion) < self.Q3.Range then
@@ -551,7 +526,7 @@ function Yasuo:LC()
     --Jungle
     local DGQ = self.E:GetDamage(minion)  
     if self.LE then
-        for i ,PJ in pairs(self:JungleTbl()) do
+        for i ,PJ in pairs(self:JungleTbl(1000)) do
             if PJ ~= 0 then
                 minionJ = GetUnit(PJ)
                 if GetDistance(minionJ) < self.E.Range and DGQ > minionJ.HP then
@@ -561,7 +536,7 @@ function Yasuo:LC()
         end 
     end 
     if self.LQ then
-        for i ,PJ in pairs(self:JungleTbl()) do
+        for i ,PJ in pairs(self:JungleTbl(1000)) do
             if PJ ~= 0 then
                 minionJ = GetUnit(PJ)
                 if GetDistance(minionJ) < self.Q.Range and not myHero.IsDash then
@@ -571,7 +546,7 @@ function Yasuo:LC()
         end 
     end 
     if myHero.HasBuff("YasuoQ3W") and self.LQ3 and not myHero.IsDash then
-        for i ,PJ in pairs(self:JungleTbl()) do
+        for i ,PJ in pairs(self:JungleTbl(1000)) do
             if PJ ~= 0 then
                 minionJ = GetUnit(PJ)
                 if GetDistance(minionJ) < self.Q3.Range then
@@ -596,7 +571,7 @@ function Yasuo:KillRoubed()
     local DGQ = self.Q:GetDamage(target)  
     local DGW = self.R:GetDamage(target)
     local DGE = self.E:GetDamage(target)
-    for i, enemys in pairs(self:GetEnemyHeroes()) do
+    for i, enemys in pairs(self:GetEnemyHeroes(1400)) do
             target = GetAIHero(enemys)
             if target ~= 0 and not IsDead(target) then
             if CanCast(_Q) and IsValidTarget(target, self.Q.Range) and DGQ > target.HP then
@@ -635,7 +610,7 @@ function Yasuo:KillRoubed()
 end 
 
 function Yasuo:ComboYasuo()
-    for i, enemys in pairs(self:GetEnemyHeroes()) do
+    for i, enemys in pairs(self:GetEnemyHeroes(1400)) do
         target = GetAIHero(enemys)
         if target ~= 0 and not IsDead(target) then
         if CanCast(_Q) and IsValidTarget(target, self.Q.Range) then
@@ -654,7 +629,7 @@ function Yasuo:ComboYasuo()
     end
     --------------------------------------------------------------------
     if not myHero.HasBuff("YasuoQ3W") then
-        for i ,enemys in pairs(self:GetEnemyHeroes()) do
+        for i ,enemys in pairs(self:GetEnemyHeroes(1400)) do
             target = GetAIHero(enemys)
             if target ~= 0 and self.E:IsReady() and self.CE then
                 local minion = self:GetGapMinion(target)
@@ -668,23 +643,22 @@ function Yasuo:ComboYasuo()
 end 
 
 function Yasuo:StackQ()
-    for i ,enemys in pairs(self:GetEnemyHeroes()) do
+    for i ,enemys in pairs(self:GetEnemyHeroes(1400)) do
         target = GetAIHero(enemys)
         if target ~= 0 then
 	if not myHero.HasBuff("YasuoQ3W") and GetDistance(target) < self.Q3.Range and GetKeyPress(self.menu_keybin_combo) == 0 then
-		for i ,P in pairs(self:EnemyMinionsTbl()) do
+		for i ,P in pairs(self:EnemyMinionsTbl(1000)) do
             if P ~= 0 then
             minion = GetUnit(P)
-			if minion and CanCast(_Q) and IsValidTarget(minion, self.Q.Range) and minion.IsEnemy then
+			if minion and CanCast(_Q) and IsValidTarget(minion, self.Q.Range) then
 			CastSpellToPos(minion.x, minion.z, _Q)
             end
         end 
 		end
-
-		for i ,P2 in pairs(self:JungleTbl()) do
+		for i ,P2 in pairs(self:JungleTbl(1000)) do
             if P2 ~= 0 then
             minio2n = GetUnit(P2)
-			if minio2n and CanCast(_Q) and IsValidTarget(minio2n, self.Q.Range) and minio2n.IsEnemy then
+			if minio2n and CanCast(_Q) and IsValidTarget(minio2n, self.Q.Range) then
 			CastSpellToPos(minio2n.x, minio2n.z, _Q)
             end
             end
@@ -704,35 +678,27 @@ function Yasuo:StackQ()
 	end
 end
 
-
---[[function Yasuo:HarassMode()
-    for i, enemys in pairs(self:GetEnemyHeroes()) do
-        target = GetAIHero(enemys)
-        if target ~= 0 and not IsDead(target) then
-        if CanCast(_Q) and IsValidTarget(target, self.Q.Range) then
-            CastSpellToPos(target.x, target.z, _Q)
-         end
-          if myHero.HasBuff("YasuoQ3W") and CanCast(_Q) and IsValidTarget(target, self.Q3.Range) then
-            local CPX, CPZ, UPX, UPZ, hcW, AOETarget = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.Q3.Range, self.Q.speed, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
-            -----local Collision = CountObjectCollision(1, target.Addr, myHero.x, myHero.z, CPX, CPZ, self.W.width, self.W.Range, 10)
-             if hcW >= 3 then
-                CastSpellToPos(CPX,CPZ, _Q)
-            end
-         end
-           if CanCast(_E) and DGE > target.HP and IsValidTarget(target, self.E.Range) then
-            CastSpellTarget(target.Addr, _E)
-           end 
-        end 
-    end 
-end ]]
-
 function Yasuo:AutoQYasuo()
     if myHero.HasBuff("YasuoQ3W") and CanCast(_Q) and IsValidTarget(target, self.Q3.Range) then
         local CPX, CPZ, UPX, UPZ, hcW, AOETarget = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.Q3.Range, self.Q.speed, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
-         if hcW >= 6 then
+         if hcW >= 3 then
             CastSpellToPos(CPX,CPZ, _Q)
         end
      end
+end 
+
+function Yasuo:AutoR()
+    for i, enemys in pairs(self:GetEnemyHeroes(1400)) do
+    target = GetAIHero(enemys)
+    if target ~= nil then
+        local DGQ = self.Q:GetDamage(target)  
+        local DGW = self.R:GetDamage(target)
+        local DGE = self.E:GetDamage(target)
+        if self.CanItem and CountBuffByType(target.Addr, 29) > 0 or CountBuffByType(target.Addr, 30) > 0 and (DGW + DGQ + DGE > target.HP) and not self:IsUnderTurretEnemy(target) then
+            CastSpellTarget(myHero.Addr, _R) 
+        end 
+    end 
+end
 end 
 
 function Yasuo:OnTick()
@@ -749,16 +715,13 @@ function Yasuo:OnTick()
     end 
 
     self:KillRoubed()
+    self:AutoR()
 
     self.OrbMode = GetMode()
 
     if self.OrbMode == 1 then
         self:ComboYasuo()
     end 
-
-    --[[if self.OrbMode == 2 then
-		self:HarassMode()
-    end ]]
 
     if self.OrbMode == 3 then
 		self:LC()
