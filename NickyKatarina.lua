@@ -371,7 +371,7 @@ function Katarina:PrimeiroCombo()
     local t = self:GetEnemies()
     for k,v in pairs(t) do  
         local enemy = GetAIHero(v)
-        if enemy ~= 0 then
+        if enemy ~= 0 and not myHero.HasBuff("katarinarsound") then
             if self.CountDagger == 0 then
             if GetDistance(enemy) < 800 and self.W:IsReady() and self.E:IsReady() and not self:IsUnderTurretEnemy(enemy) then
                 CastSpellToPos(enemy.x, enemy.z, _E)
@@ -403,7 +403,7 @@ function Katarina:SegundoCombo()
     local t = self:GetEnemies()
     for k,v in pairs(t) do  
         local enemy = GetAIHero(v)
-        if enemy ~= 0 then
+        if enemy ~= 0 and not myHero.HasBuff("katarinarsound") then
             if self.CountDagger == 0 then
             if GetDistance(enemy) < 800 and self.W:IsReady() and self.E:IsReady() and not self:IsUnderTurretEnemy(enemy) then
                 CastSpellToPos(enemy.x, enemy.z, _E)
@@ -435,7 +435,7 @@ function Katarina:TerceitoCombo()
     local t = self:GetEnemies()
     for k,v in pairs(t) do  
         local enemy = GetAIHero(v)
-        if enemy ~= 0 then
+        if enemy ~= 0 and not myHero.HasBuff("katarinarsound") then
             if GetDistance(enemy) < 725 and self.Q:IsReady() then
                 CastSpellTarget(enemy.Addr, _Q)
             end 
