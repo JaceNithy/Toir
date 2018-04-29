@@ -137,12 +137,13 @@ function Yasuo:MEC()
     self.Q3 = Spell({Slot = 0, SpellType = Enum.SpellType.SkillShot, Range = 1200, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
     self.W = Spell({Slot = 1, SpellType = Enum.SpellType.SkillShot, Range = 400, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
     self.E = Spell({Slot = 2, SpellType = Enum.SpellType.Targetted, Range = 475})
-    self.R = Spell({Slot = 3, SpellType = Enum.SpellType.Active, Range = 1400})
+    self.R = Spell({Slot = 3, SpellType = Enum.SpellType.Targetted, Range = 1400})
 
     --Marked
     self.Marka = false
     --OBj
     self.Tributo = { }
+    self.AAtack = 0 
 
     self:EveMenus()
 
@@ -192,8 +193,6 @@ function Yasuo:EveMenus()
     self.ModeE = self:MenuComboBox("Mode [W] Spell", 1)
     self.StackSPellQ = self:MenuBool("StackQ", true)
 
-    self.CanItem = self:MenuBool("Use Buff (CC + R)", true)
-
      --Lane
      self.LQ = self:MenuBool("Lane Q", true)
      self.LW = self:MenuBool("Lane W", true)
@@ -231,10 +230,6 @@ function Yasuo:OnDrawMenu()
             Menu_Separator()
             Menu_Text("--Combo [R]--")
             self.CR = Menu_Bool("Use R", self.CR, self.menu)
-            Menu_Separator()
-            Menu_Text("--Buff (CC)--")
-            --//CanItem
-            self.CanItem = Menu_Bool("Use Buff (CC)", self.CanItem, self.menu)
             Menu_Separator()
             Menu_Text("--Misc--")
             self.UnTurret = Menu_Bool("Use UnderTurretEnemy", self.UnTurret, self.menu)
@@ -296,7 +291,7 @@ function Yasuo:OnProcessSpell(unit, spell)
             CastSpellToPos(wPos.x, wPos.z, _W)
         end
     end 
-    if unit.IsEnemy then
+    if unit and unit.IsEnemy then
         spell.endPos = {x=spell.DestPos_x, y=spell.DestPos_y, z=spell.DestPos_z}
            if self.W_SPELLS[spell.Name] and not unit.IsMe and GetDistance(unit) <= GetDistance(unit, spell.endPos) then
             CastSpellToPos(unit.x, unit.z, _W)
@@ -579,15 +574,14 @@ function Yasuo:KillRoubed()
              end
               if myHero.HasBuff("YasuoQ3W") and CanCast(_Q) and IsValidTarget(target, self.Q3.Range) and DGQ > target.HP then
                 local CPX, CPZ, UPX, UPZ, hcW, AOETarget = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.Q3.Range, self.Q.speed, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
-                -----local Collision = CountObjectCollision(1, target.Addr, myHero.x, myHero.z, CPX, CPZ, self.W.width, self.W.Range, 10)
-                 if hcW >= 3 then
-                    CastSpellToPos(CPX,CPZ, _Q)
-                end
+                if hcW >= 5 then
+                   CastSpellToPos(CPX,CPZ, _Q)
+               end
              end
                if CanCast(_E) and DGE > target.HP and IsValidTarget(target, self.E.Range + self.Q.Range) then
                 CastSpellTarget(target.Addr, _E)
             end
-            if CanCast(_R) and (DGW + DGQ + DGE > target.HP) and IsValidTarget(target, 1400) then
+            if CanCast(_R) and DGW  > target.HP and IsValidTarget(target, 1400) then
                 CastSpellTarget(myHero.Addr, _R)
             end 
         else if CanCast(_Q) and IsValidTarget(target, self.Q.Range) and DGQ > target.HP then
@@ -602,7 +596,7 @@ function Yasuo:KillRoubed()
                if CanCast(_E) and myHero.HasBuff("YasuoQ3W") and (DGQ + DGE > target.HP) and IsValidTarget(target, self.E.Range + self.Q.Range) then
                 CastSpellTarget(target.Addr, _E)
             end
-            if CanCast(_R) and (DGW + DGQ + DGE > target.HP) and IsValidTarget(target, 1400) then
+            if CanCast(_R) and DGW > target.HP and IsValidTarget(target, 1400) then
                 CastSpellTarget(myHero.Addr, _R)
             end 
         end
@@ -618,11 +612,11 @@ function Yasuo:ComboYasuo()
          end
           if myHero.HasBuff("YasuoQ3W") and CanCast(_Q) and IsValidTarget(target, self.Q3.Range) then
             local CPX, CPZ, UPX, UPZ, hcW, AOETarget = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.Q3.Range, self.Q.speed, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
-             if hcW >= 3 then
-                CastSpellToPos(CPX,CPZ, _Q)
-            end
+            if hcW >= 3 then
+               CastSpellToPos(CPX,CPZ, _Q)
+           end
          end
-           if CanCast(_E)  and IsValidTarget(target, self.E.Range) and not self:IsMarked(target) and not self:IsUnderTurretEnemy(target) then
+           if CanCast(_E)  and IsValidTarget(target, self.E.Range) and self:IsAfterAttack() and not self:IsMarked(target) and not self:IsUnderTurretEnemy(target) then
             CastSpellTarget(target.Addr, _E)
            end
         end
@@ -681,25 +675,33 @@ end
 function Yasuo:AutoQYasuo()
     if myHero.HasBuff("YasuoQ3W") and CanCast(_Q) and IsValidTarget(target, self.Q3.Range) then
         local CPX, CPZ, UPX, UPZ, hcW, AOETarget = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.Q3.Range, self.Q.speed, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
-         if hcW >= 3 then
-            CastSpellToPos(CPX,CPZ, _Q)
-        end
-     end
+        if hcW >= 5 then
+           CastSpellToPos(CPX,CPZ, _Q)
+       end
+    end 
 end 
 
+    
+function Yasuo:IsAfterAttack()
+    if CanMove() and not CanAttack() then
+        return true
+    else
+        return false
+    end
+end
+
 function Yasuo:AutoR()
-    for i, enemys in pairs(self:GetEnemyHeroes(1400)) do
-    target = GetAIHero(enemys)
-    if target ~= nil then
-        local DGQ = self.Q:GetDamage(target)  
-        local DGW = self.R:GetDamage(target)
-        local DGE = self.E:GetDamage(target)
-        if self.CanItem and CountBuffByType(target.Addr, 29) > 0 or CountBuffByType(target.Addr, 30) > 0 and (DGW + DGQ + DGE > target.HP) and not self:IsUnderTurretEnemy(target) then
-            CastSpellTarget(myHero.Addr, _R) 
+    for i ,enemys in pairs(self:GetEnemyHeroes(1400)) do
+        target = GetAIHero(enemys)
+        if target ~= 0 and self.CR then
+            if CountBuffByType(target.Addr, 29) > 0 or CountBuffByType(target.Addr, 30) > 0 then
+                    if self.R:IsReady() and IsValidTarget(target, 1400) and not self:IsUnderTurretEnemy(target) then
+                    CastSpellTarget(target.Addr, _R)
+                end 
+            end 
         end 
     end 
-end
-end 
+end  
 
 function Yasuo:OnTick()
     if (IsDead(myHero.Addr) or myHero.IsRecall or IsTyping() or IsDodging()) or not IsRiotOnTop() then return end
