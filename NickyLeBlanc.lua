@@ -416,11 +416,16 @@ function LeBlanc:ComboLogic()
 end 
 
 function LeBlanc:CCE()
-    if IsValidTarget(target, 900) then
-        local Collision = CountCollision(myHero.x, myHero.z, target.x, target.z, self.E.delay, self.E.width, self.E.range, self.E.speed, 0, 5, 5, 5, 5)
-        local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
-        if Collision == 0 and HitChance >= 5 then
-            CastSpellToPos(CastPosition.x, CastPosition.z, _E)
+    for i,hero in pairs(GetEnemyHeroes()) do
+        if hero ~= 0 then
+            target = GetAIHero(hero)
+            if IsValidTarget(target, 900) then
+                local Collision = CountCollision(myHero.x, myHero.z, target.x, target.z, self.E.delay, self.E.width, self.E.range, self.E.speed, 0, 5, 5, 5, 5)
+                local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
+                if Collision == 0 and HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _E)
+                end 
+            end 
         end 
     end 
 end 
