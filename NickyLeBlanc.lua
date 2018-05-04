@@ -379,7 +379,7 @@ function LeBlanc:KillW()
     for i,hero in pairs(GetEnemyHeroes()) do
         if hero ~= 0 then
             target = GetAIHero(hero)
-            if IsValidTarget(target, self.W.range) and GetDamage("W", target) > target.HP then
+            if IsValidTarget(target, self.W.range) and not wUsed() and GetDamage("W", target) > target.HP then
                 CastSpellToPos(target.x, target.z, _W)
             end 
         end 
