@@ -252,6 +252,14 @@ function LeBlanc:OnTick()
         self.W:SetTargetted()
         self.WReturn = true
     end 
+    for _, Enemy in pairs(GetEnemyHeroes()) do
+        target = GetAIHero(Enemy)
+        if target ~= nil and target.IsDead then
+            if wUsed() then
+                CastSpellTarget(myHero.Addr, _W)
+            end 
+        end 
+    end 
 
     if self.KQ then
         self:KillQ()
@@ -267,6 +275,7 @@ function LeBlanc:OnTick()
 
     if self.WR then
         self:LB_Return()
+        self:ReturCount()
     end 
 
     if self.WC then
@@ -307,8 +316,8 @@ function LeBlanc:GetWCirclePreCore(target)
 	return nil , 0 , nil
 end
 
-function LeBlanc:GetWLinePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.E.delay, self.E.width, self.E.range, self.E.speed, myHero.x, myHero.z, false, true, 1, 0, 5, 5, 5, 5)
+function LeBlanc:GetELinePreCore(target)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.E.delay, self.E.width, self.E.range, self.E.speed, myHero.x, myHero.z, false, false, 0, 2, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
@@ -353,9 +362,8 @@ function LeBlanc:ComboRLe()
         end 
         if self.PrioritizeR == 2 and IsValidTarget(target, self.E.range) then
             if self.EUlt then
-                local CastPosition, HitChance, Position = vpred:GetLineCastPosition(target, self.E.delay, self.E.width, self.E.range, self.E.speed, myHero, false)
-            local Collision = CountCollision(myHero.x, myHero.z, target.x, target.z, self.E.delay, self.E.width, self.E.range, self.E.speed, 0, 5, 5, 5, 5)
-            if Collision == 0 and HitChance >= 5 then
+            local CastPosition, HitChance, Position = self:GetELinePreCore(target)
+            if HitChance >= 5 then
             CastSpellToPos(CastPosition.x, CastPosition.z, _R)
             end 
         end 
@@ -397,6 +405,17 @@ function LeBlanc:KillE()
     end 
 end 
 
+function LeBlanc:ReturCount()
+    if EnemiesAround(myHero.Addr, 1000) >= self.WCount then
+        if self.WReturn then
+            wUsed()
+        end 
+    end 
+    if self.WUlt and self.RWReturn then
+        RwUsed()
+    end 
+end 
+
 function LeBlanc:ComboLogic()
     for i,hero in pairs(GetEnemyHeroes()) do
         if hero ~= 0 then
@@ -420,10 +439,9 @@ function LeBlanc:CCE()
         if hero ~= 0 then
             target = GetAIHero(hero)
             if IsValidTarget(target, 900) then
-                local Collision = CountCollision(myHero.x, myHero.z, target.x, target.z, self.E.delay, self.E.width, self.E.range, self.E.speed, 0, 5, 5, 5, 5)
-                local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
-                if Collision == 0 and HitChance >= 5 then
-                    CastSpellToPos(CastPosition.x, CastPosition.z, _E)
+                local CastPosition, HitChance, Position = self:GetELinePreCore(target)
+                if HitChance >= 5 then
+                CastSpellToPos(CastPosition.x, CastPosition.z, _E)
                 end 
             end 
         end 
@@ -443,9 +461,8 @@ function LeBlanc:ComboLogic2()
                 CastSpellTarget(target.Addr, _Q)
             end 
             if IsValidTarget(target, 900)  then
-                local Collision = CountCollision(myHero.x, myHero.z, target.x, target.z, self.E.delay, self.E.width, self.E.range, self.E.speed, 0, 5, 5, 5, 5)
-                local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
-                if Collision == 0 and HitChance >= 5 then
+                local CastPosition, HitChance, Position = self:GetELinePreCore(target)
+                if HitChance >= 5 then
                     CastSpellToPos(CastPosition.x, CastPosition.z, _E)
                 end 
             end 
@@ -484,8 +501,9 @@ function AlliesAround(object, range)
     return CountAllyChampAroundObject(object, range)
 end 
 
+
 function LeBlanc:LB_Return()
-    if (self.RWReturn or self.WReturn ) and GetKeyPress(self.menu_key_combo) > 0 then
+    if (self.RWReturn or self.WReturn) and GetKeyPress(self.menu_key_combo) > 0 then
         for _, Enemy in pairs(GetEnemyHeroes()) do
             target = GetAIHero(Enemy)
 			for _, WRett in pairs(self.ObjW) do
@@ -542,7 +560,7 @@ function LeBlanc:CastLaneClear()
         if minion ~= 0 then
             if not self:IsUnderTurretEnemy(minion) and myHero.MP / myHero.MaxMP * 100 > self.ManaClear then
             local Hit = GetMinionsHit(minion, 350)
-            if Hit >= self.hitminion and CanCast(_W) and GetDistance(minion) < self.W.range then
+            if Hit >= self.hitminion and CanCast(_W) and GetDistance(minion) < self.W.range and GetDamage("W", target) > target.HP then
                 CastSpellToPos(minion.x, minion.z, _W)
             end 
             local Hit = GetMinionsHit(minion, 350)
@@ -614,9 +632,8 @@ function LeBlanc:LB_CastE()
             target = GetAIHero(hero)
             if self.RWReturn then
                 if IsValidTarget(target, self.E.range) then
-                    local Collision = CountCollision(myHero.x, myHero.z, target.x, target.z, self.E.delay, self.E.width, self.E.range, self.E.speed, 0, 5, 5, 5, 5)
-                    local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
-                    if Collision == 0 and HitChance >= 5 then
+                    local CastPosition, HitChance, Position = self:GetELinePreCore(target)
+                    if HitChance >= 5 then
                         CastSpellToPos(CastPosition.x, CastPosition.z, _E)
                     end 
                 end
