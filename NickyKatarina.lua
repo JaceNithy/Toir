@@ -24,8 +24,7 @@ function Katarina:_MidLane()
   
     --Spell
     self.Q = Spell({Slot = 0, SpellType = Enum.SpellType.Targetted, Range = 625})
-    self.W = Spell({Slot = 1, SpellType = Enum.SpellType.Active, Range = 150})
-    self.W2 = Spell({Slot = 1, SpellType = Enum.SpellType.Active, Range = 340})
+    self.W = Spell({Slot = 1, SpellType = Enum.SpellType.Active, Range = 350})
     self.E = Spell({Slot = 2, SpellType = Enum.SpellType.SkillShot, Range = 725, SkillShotType = Enum.SkillShotType.Circle, Collision = false, Width = 160, Delay = 400, Speed = 2000})
     self.R = Spell({Slot = 3, SpellType = Enum.SpellType.Active, Range = 550})
 
@@ -37,12 +36,14 @@ function Katarina:_MidLane()
     self.Dagger = { }
     self.CountDagger = 0
     self.DelayDaga = 0
+    self.RCastTime = 0	
 
     AddEvent(Enum.Event.OnTick, function(...) self:OnTick(...) end)
     AddEvent(Enum.Event.OnUpdateBuff, function(...) self:OnUpdateBuff(...) end)
     AddEvent(Enum.Event.OnRemoveBuff, function(...) self:OnRemoveBuff(...) end)
     AddEvent(Enum.Event.OnCreateObject, function(...) self:OnCreateObject(...) end)
     AddEvent(Enum.Event.OnDeleteObject, function(...) self:OnDeleteObject(...) end)
+    AddEvent(Enum.Event.OnProcessSpell, function(...) self:OnProcessSpell(...) end)
     AddEvent(Enum.Event.OnDraw, function(...) self:OnDraw(...) end)
     AddEvent(Enum.Event.OnDrawMenu, function(...) self:OnDrawMenu(...) end)
 end 
@@ -149,8 +150,6 @@ end
 function Katarina:OnDrawMenu()
 	if not Menu_Begin(self.menu) then return end
         if (Menu_Begin("Combo")) then
-            self.ComboMode = Menu_ComboBox("Combo [ Katarina ]", self.ComboMode, "Q-E\0E-Q\0E-W-Q-E-R\0", self.menu)
-            Menu_Separator()
             Menu_Text("--Logic Q--")
             self.CQ = Menu_Bool("Use Q", self.CQ, self.menu)
             Menu_Separator()
@@ -245,6 +244,12 @@ function Katarina:OnRemoveBuff(unit, buff)
         self.KatUlt = false
     end 
 end
+
+function Katarina:OnProcessSpell(unit, spell)
+    if unit.IsMe and spell.Name == "KatarinaR" then
+		self.RCastTime = GetTimeGame()		
+	end
+end 
 
 function Katarina:OnDraw()
     if self._Draw_Q and self.Q:IsReady() then
@@ -354,7 +359,7 @@ end
         
 function Katarina:ChancelR()
     local mousePos = Vector(GetMousePos())
-	if myHero.HasBuff("katarinarsound") then
+    if myHero.HasBuff("katarinarsound") then
 		_G.Orbwalker:AllowAttack(false)
 		_G.Orbwalker:AllowMovement(false)
 	else
@@ -367,96 +372,6 @@ function Katarina:ChancelR()
 	end
 end 
 
-function Katarina:PrimeiroCombo()
-    local t = self:GetEnemies()
-    for k,v in pairs(t) do  
-        local enemy = GetAIHero(v)
-        if enemy ~= 0 and not myHero.HasBuff("katarinarsound") then
-            if self.CountDagger == 0 then
-            if GetDistance(enemy) < 800 and self.W:IsReady() and self.E:IsReady() and not self:IsUnderTurretEnemy(enemy) then
-                CastSpellToPos(enemy.x, enemy.z, _E)
-            end
-            if GetDistance(enemy) < 340 and self.W:IsReady() then 
-                CastSpellTarget(myHero.Addr, _W)
-            end 
-            if GetDistance(enemy) < 725 and self.Q:IsReady() then
-                CastSpellTarget(enemy.Addr, _Q)
-            end 
-        else
-            if self.CountDagger > 0 then
-                for _, Daga in pairs(self.Dagger) do
-                    local spot = Vector(Daga) + (Vector(enemy) - Vector(Daga)):Normalized() * 145
-                    local delay = 0.2
-                        if GetTimeGame() - self.DelayDaga > 1.1 - delay then
-                            if self.E:IsReady() and GetDistanceSqr(enemy, spot) < self.W2.Range * self.W2.Range then
-                                CastSpellToPos(spot.x, spot.z, _E)
-                            end 
-                        end 
-                    end 
-                end 
-            end 
-        end 
-    end 
-end 
-
-function Katarina:SegundoCombo()
-    local t = self:GetEnemies()
-    for k,v in pairs(t) do  
-        local enemy = GetAIHero(v)
-        if enemy ~= 0 and not myHero.HasBuff("katarinarsound") then
-            if self.CountDagger == 0 then
-            if GetDistance(enemy) < 800 and self.W:IsReady() and self.E:IsReady() and not self:IsUnderTurretEnemy(enemy) then
-                CastSpellToPos(enemy.x, enemy.z, _E)
-            end
-            if GetDistance(enemy) < 340 and self.W:IsReady() then 
-                CastSpellTarget(myHero.Addr, _W)
-            end 
-            if GetDistance(enemy) < 725 and self.Q:IsReady() then
-                CastSpellTarget(enemy.Addr, _Q)
-            end 
-        else
-            if self.CountDagger > 0 then
-                for _, Daga in pairs(self.Dagger) do
-                    local spot = Vector(Daga) + (Vector(enemy) - Vector(Daga)):Normalized() * 145
-                    local delay = 0.2
-                        if GetTimeGame() - self.DelayDaga > 1.1 - delay then
-                            if self.E:IsReady() and GetDistanceSqr(enemy, spot) < self.W2.Range * self.W2.Range then
-                                CastSpellToPos(spot.x, spot.z, _E)
-                            end 
-                        end 
-                    end 
-                end 
-            end 
-        end 
-    end 
-end 
-
-function Katarina:TerceitoCombo()
-    local t = self:GetEnemies()
-    for k,v in pairs(t) do  
-        local enemy = GetAIHero(v)
-        if enemy ~= 0 and not myHero.HasBuff("katarinarsound") then
-            if GetDistance(enemy) < 725 and self.Q:IsReady() then
-                CastSpellTarget(enemy.Addr, _Q)
-            end 
-            if GetDistance(enemy) < 340 and self.W:IsReady() then 
-                CastSpellTarget(myHero.Addr, _W)
-            end 
-        else
-            if self.CountDagger > 0 then
-                for _, Daga in pairs(self.Dagger) do
-                    local spot = Vector(Daga) + (Vector(enemy) - Vector(Daga)):Normalized() * 145
-                    local delay = 0.2
-                        if GetTimeGame() - self.DelayDaga > 1.1 - delay then
-                            if self.E:IsReady() and GetDistanceSqr(enemy, spot) < self.W2.Range * self.W2.Range then
-                            CastSpellToPos(spot.x, spot.z, _E)
-                        end 
-                    end 
-                end 
-            end 
-        end 
-    end 
-end 
 
 function Katarina:CastLaneClear()
     for i ,minion in pairs(EnemyMinionsTbl()) do
@@ -473,7 +388,7 @@ function Katarina:CastLaneClear()
                     local delay = 0.2
                         if GetTimeGame() - self.DelayDaga > 1.1 - delay then
                     local spot = Vector(Daga) + (Vector(minion) - Vector(Daga)):Normalized() * 145
-                    if self.E:IsReady() and GetDistanceSqr(minion, spot) < self.W2.Range * self.W2.Range  then
+                    if self.E:IsReady() and GetDistanceSqr(minion, spot) < self.W.Range * self.W.Range  then
                     CastSpellToPos(spot.x, spot.z, _E)
                     end 
                     end 
@@ -497,15 +412,42 @@ end
 
 
 function Katarina:ComboKat()
-    if self.ComboMode == 2 then
-        self:PrimeiroCombo()
+    local targetC = GetTargetSelector(self.E.range, 0)
+    enemy = GetAIHero(targetC)
+    if targetC ~= 0 then
+        if self.CountDagger > 0 and not myHero.HasBuff("katarinarsound") then
+            for _, Daga in pairs(self.Dagger) do
+                local spot = Vector(Daga) + (Vector(enemy) - Vector(Daga)):Normalized() * 200
+                local delay = 0.2
+                if GetTimeGame() - self.DelayDaga > 1.1 - delay then
+                    if self.E:IsReady() and GetDistanceSqr(enemy, spot) < self.W.Range * self.W.Range then
+                    CastSpellToPos(spot.x, spot.z, _E)
+                    end 
+                end 
+            end 
+        end 
     end 
-    if self.ComboMode == 1 then
-        self:SegundoCombo()
+    if self.CountDagger == 0 and not myHero.HasBuff("katarinarsound") and not self:IsUnderTurretEnemy(target) then
+        if self.E:IsReady() and self.W:IsReady() then
+            if IsValidTarget(target, self.E.range) then
+                CastSpellToPos(target.x, target.z, _E)
+            end 
+        end 
     end 
-    if self.ComboMode == 0 then
-        self:TerceitoCombo()
+    if self.CountDagger == 0 and not myHero.HasBuff("katarinarsound") then
+        if self.W:IsReady() and self.W:IsReady() then
+            if IsValidTarget(target, 150) then
+                CastSpellTarget(myHero.Addr, _W)
+            end 
+        end 
     end 
+    if (self.CountDagger > 0 or self.CountDagger == 0) and not myHero.HasBuff("katarinarsound") then
+        if self.Q:IsReady() then
+            if IsValidTarget(target, self.Q.range) then
+                DelayAction(function() CastSpellTarget(target.Addr, _Q) end, 0.4)          				
+            end  
+        end 
+    end     
 end 
 
 function Katarina:KillSteal()
@@ -513,14 +455,14 @@ function Katarina:KillSteal()
         local enemys = GetTargetSelector(1000)
         target = GetAIHero(enemys)
         if target ~= 0 then
-            if self.CQ and self.Q:IsReady() then
+            if self.Q:IsReady() then
 				if target ~= nil and target.IsValid and self.Q:GetDamage(target) > target.HP then
-					self:CastQ(target)
+					CastSpellTarget(target.Addr, _Q)
 				end
 			end
-			if self.KE and self.E:IsReady() then
+			if self.E:IsReady() then
 				if target ~= nil and target.IsValid and self.E:GetDamage(target) > target.HP then
-					self:CastETarget(target)
+					CastSpellToPos(target.x, target.z, _E)
 				end
             end
         end 
@@ -617,11 +559,14 @@ function Katarina:OnTick()
     if self.OrbMode == 6 then
         self:EvadeFlee()
     end 
+    if self.KatUlt then 
+        SetEvade(true)
+    end
 end 
 
 function Katarina:AntiGapDash()
     local target = CountEnemyChampAroundObject(myHero.Addr, 1000)	
-        if IsCasting(myHero.Addr) or CanCast(W) == false or Setting_IsComboUseE() == false or target == nil or target == 0 then return end	
+        if IsCasting(myHero.Addr) or CanCast(W) == false or Setting_IsComboUseW() == false or target == nil or target == 0 then return end	
         local t = self:GetEnemies()
         for k,v in pairs(t) do  
             local enemy = GetAIHero(v)          
