@@ -2,7 +2,7 @@ IncludeFile("Lib\\SDK.lua")
 
 class "Katarina"
 
-local ScriptXan = 1.4
+local ScriptXan = 1.8.9
 local NameCreat = "Jace Nicky"
 function OnLoad()
     if GetChampName(GetMyChamp()) ~= "Katarina" then return end
@@ -24,7 +24,7 @@ function Katarina:_MidLane()
   
     --Spell
     self.Q = Spell({Slot = 0, SpellType = Enum.SpellType.Targetted, Range = 625})
-    self.W = Spell({Slot = 1, SpellType = Enum.SpellType.Active, Range = 350})
+    self.W = Spell({Slot = 1, SpellType = Enum.SpellType.Active, Range = 340})
     self.E = Spell({Slot = 2, SpellType = Enum.SpellType.SkillShot, Range = 725, SkillShotType = Enum.SkillShotType.Circle, Collision = false, Width = 160, Delay = 400, Speed = 2000})
     self.R = Spell({Slot = 3, SpellType = Enum.SpellType.Active, Range = 550})
 
@@ -359,6 +359,17 @@ function AlyyMinionsTbl() --SDK Toir+
     return result
 end
 
+
+function Katarina:GetECirclePreCore(target)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.E.delay, self.E.width, self.E.Range, self.R.speed, myHero.x, myHero.z, false, false, 1, 5, 5, 5, 5, 5)
+	if target ~= nil then
+		 CastPosition = Vector(castPosX, target.y, castPosZ)
+		 HitChance = hitChance
+		 Position = Vector(unitPosX, target.y, unitPosZ)
+		 return CastPosition, HitChance, Position
+	end
+	return nil , 0 , nil
+end
         
 function Katarina:ChancelR()
     local mousePos = Vector(GetMousePos())
@@ -415,70 +426,29 @@ end
 
 
 function Katarina:ComboKat()
-    local targetC = GetTargetSelector(self.E.Range, 0)
-    enemy = GetAIHero(targetC)
-    if targetC ~= 0 then
-        if self.EMode == 0 then
-            if self.CountDagger > 0 and not myHero.HasBuff("katarinarsound") then
-                for _, Daga in pairs(self.Dagger) do
-                    local spot = Vector(Daga) + (Vector(enemy) - Vector(Daga)):Normalized() * 200
-                    local delay = 0.2
-                    if GetTimeGame() - self.DelayDaga > 1.1 - delay then
-                        if IsValidTarget(enemy, self.E.Range) and self.E:IsReady() and GetDistanceSqr(enemy, spot) < self.W.Range * self.W.Range then
-                        CastSpellToPos(spot.x, spot.z, _E)
-                        end 
-                    end 
-                end 
-            end 
-        end  
-        if self.EMode == 1 then
-            if self.CountDagger > 0 and not myHero.HasBuff("katarinarsound") then
-                for _, Daga in pairs(self.Dagger) do
-                    local spot = Vector(Daga) + (Vector(enemy) - Vector(Daga)):Normalized() * 50
-                    local delay = 0.2
-                    if GetTimeGame() - self.DelayDaga > 1.1 - delay then
-                        if IsValidTarget(enemy, self.E.Range) and self.E:IsReady() and GetDistanceSqr(enemy, spot) < self.W.Range * self.W.Range then
-                        CastSpellToPos(spot.x, spot.z, _E)
-                        end 
-                    end 
-                end 
-            end 
-        end  
-        if self.EMode == 2 then
-            if self.CountDagger > 0 and not myHero.HasBuff("katarinarsound") then
-                for _, Daga in pairs(self.Dagger) do
-                    local spot = Vector(Daga) + (Vector(enemy) - Vector(Daga)):Normalized() * 125
-                    local delay = 0.2
-                    if GetTimeGame() - self.DelayDaga > 1.1 - delay then
-                        if IsValidTarget(enemy, self.E.Range) and self.E:IsReady() and GetDistanceSqr(enemy, spot) < self.W.Range * self.W.Range then
-                        CastSpellToPos(spot.x, spot.z, _E)
-                        end 
-                    end 
-                end 
-            end 
-        end  
-    end 
-    if self.CountDagger == 0 and not myHero.HasBuff("katarinarsound") and not self:IsUnderTurretEnemy(target) and CountEnemyChampAroundObject(myHero.Addr, 1000) >= 2 and CountAllyChampAroundObject(myHero.Addr, 1000) >= 1 then
-        if self.E:IsReady() and self.W:IsReady() then
-            if IsValidTarget(target, self.E.range) then
-                CastSpellToPos(target.x, target.z, _E)
+    for i, enemy in pairs(self:GetEnemies()) do
+        local target = GetAIHero(enemy)
+        if enemy ~= 0 then
+            if IsValidTarget(target) then
+                local Distance = GetDistanceSqr(target)
+                if (self.CQ and self.CW and self.CE) and Distance <= self.W.Range * self.W.Range and not myHero.HasBuff("katarinarsound") then
+                    self:CastW(target)
+                    self:CastQ(target)
+                    self:GetECast(target)
+                end
+                if (self.CQ and self.CW and self.CE) and Distance <= self.Q.Range * self.Q.Range and not myHero.HasBuff("katarinarsound") then
+                    self:CastQ(target)
+                    self:GetECast(target)
+                    self:CastW(target)
+                end
+                if (self.CQ and self.CW and self.CE) and Distance <= self.E.Range * self.E.Range and not myHero.HasBuff("katarinarsound") then
+                    self:GetECast(target)
+                    self:CastW(target)
+                    self:CastQ(target)
+                end
             end 
         end 
-    end 
-    if self.CountDagger == 0 and not myHero.HasBuff("katarinarsound") then
-        if self.W:IsReady() and self.W:IsReady() then
-            if IsValidTarget(target, 150) then
-                CastSpellTarget(myHero.Addr, _W)
-            end 
-        end 
-    end 
-    if (self.CountDagger > 0 or self.CountDagger == 0) and not myHero.HasBuff("katarinarsound") then
-        if self.Q:IsReady() then
-            if IsValidTarget(target, self.Q.range) then
-                DelayAction(function() CastSpellTarget(target.Addr, _Q) end, 0)          				
-            end  
-        end 
-    end     
+    end      
 end 
 
 function Katarina:KillSteal()
@@ -500,22 +470,53 @@ function Katarina:KillSteal()
     end 
 end 
 
-function Katarina:GetFleeMinion()
-    GetAllUnitAroundAnObject(myHero.Addr, 1500)
-    local bestMinion = nil
-    local closest = 0
-    local units = pUnit
-    local mousePos = Vector(GetMousePos())
-    MoveToPos(GetMousePosX(), GetMousePosZ())
-    for i, unit in pairs(units) do
-        if unit and unit ~= 0 and IsMinion(unit) and IsEnemy(unit) and not IsDead(unit) and not IsInFog(unit) and GetTargetableToTeam(unit) == 4 and not self:IsMarked(GetUnit(unit)) and GetDistance(GetUnit(unit)) < 375 then
-            if GetDistance(self:DashEndPos(GetUnit(unit)), mousePos) < GetDistance(mousePos) and closest < GetDistance(GetUnit(unit)) then
-                closest = GetDistance(GetUnit(unit))
-                bestMinion = unit
-            end
-        end
+
+function Katarina:CastQ(unit)
+	if IsValidTarget(unit) and self.Q:IsReady() and GetDistanceSqr(unit) < self.Q.Range * self.Q.Range then
+		CastSpellTarget(unit.Addr, _Q)
+	end
+end
+
+function Katarina:CastW(unit)
+	if self.W:IsReady() and GetDistanceSqr(unit) < self.W.Range/2 * self.W.Range/2 then
+		CastSpellTarget(myHero.Addr, _W)
+	end
+end
+
+function Katarina:CastETarget(unit)
+    if IsValidTarget(unit) and self.E:IsReady() and GetDistanceSqr(unit) < self.E.Range * self.E.Range then
+        local CastPosition, HitChance, Position = self:GetECirclePreCore(unit)
+        if HitChance >= 5 then
+            CastSpellToPos(CastPosition.x, CastPosition.z, _E)
+        end 
     end
-    return bestMinion
+end
+
+function Katarina:CastEDagger(unit)
+	if IsValidTarget(unit) then
+        for _, Daga in pairs(self.Dagger) do
+                local spot = Vector(Daga) + (Vector(unit) - Vector(Daga)):Normalized() * 145
+                local delay = 0.2
+                if GetTimeGame() - self.DelayDaga > 1.1 - delay then
+                    if IsValidTarget(unit, self.E.Range) and self.E:IsReady() and GetDistanceSqr(unit, spot) < self.W.Range * self.W.Range then
+                    CastSpellToPos(spot.x, spot.z, _E)
+                end 
+            end 
+        end 
+    end             
+end
+
+
+function Katarina:GetECast(unit)
+	if self.EonlyD then
+		self:CastEDagger(unit)
+	else
+		if self.CountDagger > 0 then
+			self:CastEDagger(unit)
+		else
+			self:CastETarget(unit)
+		end
+	end
 end
 
 function Katarina:EvadeFlee()
