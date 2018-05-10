@@ -2,7 +2,7 @@ IncludeFile("Lib\\SDK.lua")
 
 class "Katarina"
 
-local ScriptXan = 1.8.9
+local ScriptXan = 1.8
 local NameCreat = "Jace Nicky"
 function OnLoad()
     if GetChampName(GetMyChamp()) ~= "Katarina" then return end
