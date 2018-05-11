@@ -602,9 +602,6 @@ function Katarina:OnTick()
     if self.OrbMode == 6 then
         self:EvadeFlee()
     end 
-    if myHero.HasBuff("katarinarsound") then 
-        SetEvade(true)
-    end
 end 
 
 function Katarina:AntiGapDash()
