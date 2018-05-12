@@ -2,7 +2,7 @@ IncludeFile("Lib\\TOIR_SDK.lua")
 
 LeBlanc = class()
 
-local ScriptXan = 2.4
+local ScriptXan = 2.7
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -152,6 +152,8 @@ end
 function LeBlanc:OnDrawMenu()
 	if not Menu_Begin(self.menu) then return end
         if (Menu_Begin("Combo")) then
+            self.ModeComboLe = Menu_ComboBox("[Combo] Mode", self.ModeComboLe, "Q + W + E + R (W)\0Q + W + E + R (Q)\0 W + E + Q + R (E)\0\0\0", self.menu)
+            Menu_Separator()
             self.CQ = Menu_Bool("Use Q", self.CQ, self.menu)
             self.Qmarked = Menu_Bool("Use Q Marked", self.Qmarked, self.menu)
             Menu_Separator()
@@ -267,16 +269,16 @@ function LeBlanc:OnTick()
     self:LB_InRange()
     self:LB_Return()
 
-    if self.CQ then
-        self:ComboLeBlancQ()
+    if self.ModeComboLe == 0 then
+        self:Combo1()
     end
 
-    if self.CW then
-        self:ComboLeBlancW()
+    if self.ModeComboLe == 1 then
+        self:Combo2()
     end 
 
-    if self.CE then
-        self:ComboLeBlancE()
+    if self.ModeComboLe == 2 then
+        self:Combo3()
     end 
 
     if GetKeyPress(self.LBFlee) > 0 then
@@ -309,6 +311,113 @@ function LeBlanc:GetELinePreCore(target)
 	return nil , 0 , nil
 end
 
+function LeBlanc:IsPos(target)
+	if GetBuffByName(target.Addr, "LeblancQMark") > 0 or GetBuffByName(target.Addr, "LeblancRQMark") > 0 then
+		return true
+	end
+	return false
+end
+
+function LeBlanc:IsPosE(target)
+	if GetBuffByName(target.Addr, "LeblancE") > 0 then
+		return true
+	end
+	return false
+end
+
+
+function LeBlanc:Combo1()
+    local targetC = GetTargetSelector(1200, 0)
+    target = GetAIHero(targetC)
+    if targetC ~= 0 then
+        if GetKeyPress(self.menu_key_combo) > 0 then
+            if IsValidTarget(target, self.Q.range) then
+                CastSpellTarget(target.Addr, _Q)
+            end 
+            if self:IsPos(target) and IsValidTarget(target, self.W.range) and not wUsed() then
+                local CastPosition, HitChance, Position = self:GetWCirclePreCore(target)
+                if HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _W)
+                end 
+            end 
+            if IsValidTarget(target, self.E.range) and myHero.HasBuff("LeblancW") then
+                local CastPosition, HitChance, Position = self:GetELinePreCore(target)
+                if HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _E)
+                end 
+            end 
+            if self.WUlt then
+                if IsValidTarget(target, self.W.range) then
+                    local CastPosition, HitChance, Position = self:GetWCirclePreCore(target)
+                    if HitChance >= 5 then
+                        CastSpellToPos(CastPosition.x, CastPosition.z, _R)
+                    end 
+                end 
+            end 
+        end 
+    end        
+end 
+
+function LeBlanc:Combo2()
+    local targetC = GetTargetSelector(1200, 0)
+    target = GetAIHero(targetC)
+    if targetC ~= 0 then
+        if GetKeyPress(self.menu_key_combo) > 0 then
+            if IsValidTarget(target, self.Q.range) then
+                CastSpellTarget(target.Addr, _Q)
+            end 
+            if self.QUlt then
+                if IsValidTarget(target, self.Q.range) then
+                    CastSpellTarget(target.Addr, _R)
+                end 
+            end 
+            if self:IsPos(target) and IsValidTarget(target, self.W.range) and not wUsed() then
+                local CastPosition, HitChance, Position = self:GetWCirclePreCore(target)
+                if HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _W)
+                end 
+            end 
+            if IsValidTarget(target, self.E.range) then
+                local CastPosition, HitChance, Position = self:GetELinePreCore(target)
+                if HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _E)
+                end 
+            end 
+        end 
+    end 
+end 
+
+function LeBlanc:Combo3()
+    local targetC = GetTargetSelector(1200, 0)
+    target = GetAIHero(targetC)
+    if targetC ~= 0 then
+        if GetKeyPress(self.menu_key_combo) > 0 then
+            if IsValidTarget(target, self.W.range) and not wUsed() then
+                local CastPosition, HitChance, Position = self:GetWCirclePreCore(target)
+                if HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _W)
+                end 
+            end 
+            if IsValidTarget(target, self.E.range) then
+                local CastPosition, HitChance, Position = self:GetELinePreCore(target)
+                if HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _E)
+                end 
+            end 
+            if IsValidTarget(target, self.Q.range) then
+                CastSpellTarget(target.Addr, _Q)
+            end 
+            if self.EUlt then
+                if IsValidTarget(target, self.E.range) then
+                    local CastPosition, HitChance, Position = self:GetELinePreCore(target)
+                    if HitChance >= 5 then
+                        CastSpellToPos(CastPosition.x, CastPosition.z, _R)
+                    end 
+                end                   
+            end 
+        end 
+    end 
+end 
 
 function LeBlanc:IsUnderTurretEnemy(pos)
 	GetAllUnitAroundAnObject(myHero.Addr, 2000)
@@ -323,95 +432,6 @@ function LeBlanc:IsUnderTurretEnemy(pos)
 	end
 	return false
 end
-
-function LeBlanc:ComboLeBlancQ()
-    local targetC = GetTargetSelector(self.Q.range, 0)
-    target = GetAIHero(targetC)
-    if targetC ~= 0 then
-        if GetKeyPress(self.menu_key_combo) > 0 then
-            if IsValidTarget(target.Addr, self.Q.range) then
-                CastSpellTarget(target.Addr, _Q)
-            end 
-        end 
-    end 
-    if GetKeyPress(self.menu_key_combo) > 0 then
-        if self.PrioritizeR == 0 then
-            if (self.Marked or not self.Marked) then
-                if IsValidTarget(target.Addr, self.Q.range) then
-                    if self.QUlt then
-                        CastSpellTarget(target.Addr, _R)
-                    end 
-                end 
-            end 
-        end 
-    end 
-    if GetKeyPress(self.menu_key_combo) > 0 then
-        if target.HasBuff("LeblancE") then
-            if IsValidTarget(target, self.Q.range) then
-                CastSpellTarget(target.Addr, _Q)
-            end 
-        end 
-    end 
-end 
-
-function LeBlanc:ComboLeBlancW()
-    local targetW = GetTargetSelector(self.W.range, 0)
-    target = GetAIHero(targetW)
-    if targetW ~= 0 and (self.Marked or self.MarkedR) then
-        if not wUsed() and self.W:IsReady() then
-            if GetKeyPress(self.menu_key_combo) > 0  and IsValidTarget(target, self.W.range) then
-            local CastPosition, HitChance, Position = self:GetWCirclePreCore(target)
-                if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _W)
-                end 
-            end 
-        end 
-    end 
-    if wUsed() and self.W:IsReady() and EnemiesAround(myHero.Addr, 1000) >= self.WCount then
-        CastSpellTarget(myHero.Addr, _W)
-    end 
-    if GetKeyPress(self.menu_key_combo) > 0 then
-        if self.PrioritizeR == 1 then
-            if (self.Marked or not self.Marked) then
-                if IsValidTarget(target.Addr, self.W.range) then
-                    if self.WUlt then
-                        local CastPosition, HitChance, Position = self:GetWCirclePreCore(target)
-                        if HitChance >= 5 then
-                        CastSpellToPos(CastPosition.x, CastPosition.z, _R)
-                        end 
-                    end 
-                end 
-            end 
-        end 
-    end 
-end 
-
-function LeBlanc:ComboLeBlancE()
-    local targetW = GetTargetSelector(self.E.range, 0)
-    target = GetAIHero(targetW)
-    if targetW ~= 0 and (self.Marked or self.MarkedR or not self.Marked or not self.MarkedR) then
-        if GetKeyPress(self.menu_key_combo) > 0  and IsValidTarget(target, self.W.range) then
-            local CastPosition, HitChance, Position = self:GetELinePreCore(target)
-                if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _E)
-            end 
-        end 
-    end
-    if GetKeyPress(self.menu_key_combo) > 0 then
-        if self.PrioritizeR == 2 then
-            if (self.Marked or not self.Marked) then
-                if IsValidTarget(target.Addr, self.E.range) then
-                    if self.EUlt then
-                        local CastPosition, HitChance, Position = self:GetELinePreCore(target)
-                        if HitChance >= 5 then
-                        CastSpellToPos(CastPosition.x, CastPosition.z, _R)
-                        end 
-                    end 
-                end 
-            end 
-        end 
-    end 
-end 
 
 function LeBlanc:KillQ()
     for i,hero in pairs(GetEnemyHeroes()) do
@@ -525,11 +545,11 @@ function LeBlanc:CastLaneClear()
         if minion ~= 0 then
             if not self:IsUnderTurretEnemy(minion) and myHero.MP / myHero.MaxMP * 100 > self.ManaClear then
             local Hit = GetMinionsHit(minion, 350)
-            if Hit >= self.hitminion and CanCast(_W) and GetDistance(minion) < self.W.range and GetDamage("W", target) > target.HP then
+            if Hit >= self.hitminion and CanCast(_W) and GetDistance(minion) < self.W.range and GetDamage("W", minion) > minion.HP then
                 CastSpellToPos(minion.x, minion.z, _W)
             end 
             local Hit = GetMinionsHit(minion, 350)
-            if Hit >= self.hitminion and GetDistance(minion) < self.W.range and self.WUlt then
+            if Hit >= self.hitminion and GetDistance(minion) < self.W.range and self.WUlt and GetDamage("W", minion) > minion.HP then
                 CastSpellToPos(minion.x, minion.z, _R)
             end 
         end 
