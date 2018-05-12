@@ -3,7 +3,7 @@ IncludeFile("Lib\\TOIR_SDK.lua")
 
 Jhin = class()
 
-local ScriptXan = 2.0
+local ScriptXan = 2.1
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -272,6 +272,13 @@ function Jhin:OnNewPath(unit, startPos, endPos, isDash, dashSpeed ,dashGravity, 
 	end
 end
 
+function Jhin:IsPos(target)
+	if GetBuffByName(target.Addr, "jhinespotteddebuff") > 0 then
+		return true
+	end
+	return false
+end
+
 local function GetDistanceSqr(p1, p2)
     p2 = GetOrigin(p2) or GetOrigin(myHero)
     return (p1.x - p2.x) ^ 2 + ((p1.z or p1.y) - (p2.z or p2.y)) ^ 2
@@ -295,10 +302,10 @@ function Jhin:CastW()
     local targetW = GetTargetSelector(self.W.range, 1)
     target = GetAIHero(targetW)
     if targetW ~= 0 then
-            if GetKeyPress(self.Combo) > 0 and IsValidTarget(self.IsMarked.Addr, self.MaxRangeW) then
-                if GetDistance(self.IsMarked.Addr.Addr) > self.MinRangeW then
-                    if not self.UtimateOn and self.IsMarked then
-                    local CastPosition, HitChance, Position = self:GetWLinePreCore(self.IsMarked)
+            if GetKeyPress(self.Combo) > 0 and IsValidTarget(target.Addr, self.MaxRangeW) then
+                if GetDistance(target.Addr) > self.MinRangeW then
+                    if not self.UtimateOn and self:IsPos(target) then
+                    local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
                     if HitChance >= 6 then
                         CastSpellToPos(CastPosition.x, CastPosition.z, _W)
                     end
@@ -312,10 +319,10 @@ function Jhin:FocusMak()
     local targetW = GetTargetSelector(self.W.range, 1)
     target = GetAIHero(targetW)
     if targetW ~= 0 then
-             if IsValidTarget(self.IsMarked.Addr, self.MaxRangeW) then
-                if GetDistance(self.IsMarked.Addr) > self.MinRangeW then
-                    if self.IsMarked and not self.UtimateOn then
-                    local CastPosition, HitChance, Position = self:GetWLinePreCore(self.IsMarked)
+             if IsValidTarget(target.Addr, self.MaxRangeW) then
+                if GetDistance(target.Addr) > self.MinRangeW then
+                    if self:IsPos(target) and not self.UtimateOn then
+                    local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
                     if HitChance >= 6 then
                         CastSpellToPos(CastPosition.x, CastPosition.z, _W)
                     end
@@ -470,7 +477,7 @@ function Jhin:CastAuto()
     local targetR = GetTargetSelector(self.R.range, 1)
     target = GetAIHero(targetR)
     if targetR ~= 0 then
-            if IsValidTarget(target, 3800) then
+            if IsValidTarget(target, 4000) then
                 if self.UtimateOn then
                     local CastPosition, HitChance, Position = self:GetRLinePreCore(target)
                     if HitChance >= 6 then
