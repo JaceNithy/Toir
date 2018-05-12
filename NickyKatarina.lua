@@ -2,7 +2,7 @@ IncludeFile("Lib\\SDK.lua")
 
 class "Katarina"
 
-local ScriptXan = 1.8
+local ScriptXan = 1.9
 local NameCreat = "Jace Nicky"
 function OnLoad()
     if GetChampName(GetMyChamp()) ~= "Katarina" then return end
@@ -34,7 +34,6 @@ function Katarina:_MidLane()
     --Katarina Spells Utlit
     self.KatUlt = false
     self.Dagger = { }
-    self.CountDagger = 0
     self.DelayDaga = 0
     self.RCastTime = 0	
 
@@ -221,7 +220,6 @@ function Katarina:OnCreateObject(obj)
         if string.find(obj.Name, "Katarina_Base_W_Indicator_Ally") then
             self.Dagger[obj.NetworkId] = obj
             self.DelayDaga = GetTimeGame()
-            self.CountDagger = self.CountDagger + 1
         end 
     end 
 end 
@@ -231,7 +229,7 @@ function Katarina:OnDeleteObject(obj)
         if string.find(obj.Name, "Katarina_Base_W_Indicator_Ally") then
             self.Dagger[obj.NetworkId] = nil
             self.DelayDaga = 0
-            self.CountDagger = self.CountDagger - 1
+            
         end 
     end 
 end 
@@ -326,6 +324,14 @@ function GetMinionsHit(Pos, radius)
 		if GetDistance(minion, Pos) < radius then
 			count = count + 1
 		end
+	end
+	return count
+end
+
+function Katarina:CountDagger()
+    local count = 0
+	for _ in pairs(self.Dagger) do
+		count = count + 1
 	end
 	return count
 end
@@ -485,17 +491,14 @@ end
 
 function Katarina:CastETarget(unit)
     if IsValidTarget(unit) and self.E:IsReady() and GetDistanceSqr(unit) < self.E.Range * self.E.Range then
-        local CastPosition, HitChance, Position = self:GetECirclePreCore(unit)
-        if HitChance >= 5 then
-            CastSpellToPos(CastPosition.x, CastPosition.z, _E)
-        end 
+        CastSpellToPos(unit.x, unit.z)
     end
 end
 
 function Katarina:CastEDagger(unit)
 	if IsValidTarget(unit) then
         for _, Daga in pairs(self.Dagger) do
-                local spot = Vector(Daga) + (Vector(unit) - Vector(Daga)):Normalized() * 145
+                local spot = Vector(Daga) + (Vector(unit) - Vector(Daga)):Normalized() * 50
                 local delay = 0.2
                 if GetTimeGame() - self.DelayDaga > 1.1 - delay then
                     if IsValidTarget(unit, self.E.Range) and self.E:IsReady() and GetDistanceSqr(unit, spot) < self.W.Range * self.W.Range then
@@ -511,7 +514,7 @@ function Katarina:GetECast(unit)
 	if self.EonlyD then
 		self:CastEDagger(unit)
 	else
-		if self.CountDagger > 0 then
+		if self:CountDagger() > 0 then
 			self:CastEDagger(unit)
 		else
 			self:CastETarget(unit)
