@@ -36,6 +36,7 @@ function Katarina:_MidLane()
     self.Dagger = { }
     self.DelayDaga = 0
     self.RCastTime = 0	
+    self.CountDagger = 0
 
     AddEvent(Enum.Event.OnTick, function(...) self:OnTick(...) end)
     AddEvent(Enum.Event.OnUpdateBuff, function(...) self:OnUpdateBuff(...) end)
@@ -220,6 +221,7 @@ function Katarina:OnCreateObject(obj)
         if string.find(obj.Name, "Katarina_Base_W_Indicator_Ally") then
             self.Dagger[obj.NetworkId] = obj
             self.DelayDaga = GetTimeGame()
+            self.CountDagger = self.CountDagger + 1
         end 
     end 
 end 
@@ -229,7 +231,7 @@ function Katarina:OnDeleteObject(obj)
         if string.find(obj.Name, "Katarina_Base_W_Indicator_Ally") then
             self.Dagger[obj.NetworkId] = nil
             self.DelayDaga = 0
-            
+            self.CountDagger = self.CountDagger - 1
         end 
     end 
 end 
@@ -328,14 +330,6 @@ function GetMinionsHit(Pos, radius)
 	return count
 end
 
-function Katarina:CountDagger()
-    local count = 0
-	for _ in pairs(self.Dagger) do
-		count = count + 1
-	end
-	return count
-end
-
 
 function EnemyMinionsTbl() --SDK Toir+
     GetAllUnitAroundAnObject(myHero.Addr, 2000)
@@ -408,7 +402,7 @@ function Katarina:CastLaneClear()
                     local delay = 0.2
                         if GetTimeGame() - self.DelayDaga > 1.1 - delay then
                     local spot = Vector(Daga) + (Vector(minion) - Vector(Daga)):Normalized() * 145
-                    if self.E:IsReady() and GetDistanceSqr(minion, spot) < self.W.Range * self.W.Range  then
+                    if self.E:IsReady() and not self:IsUnderTurretEnemy(minion) and GetDistanceSqr(minion, spot) < self.W.Range * self.W.Range  then
                     CastSpellToPos(spot.x, spot.z, _E)
                     end 
                     end 
@@ -423,12 +417,27 @@ function Katarina:CastRIS()
     for k,v in pairs(t) do  
         local enemy = GetAIHero(v)
         if enemy ~= 0 then
-            if GetDistance(enemy) < 400 and self.R:IsReady() and enemy.HP/enemy.MaxHP*100 < 35 then
+            if GetDistance(enemy) < 400 and self.R:IsReady() and self:getRDmg(enemy) > enemy.HP then
                 CastSpellTarget(myHero.Addr, _R)
             end 
         end 
     end 
 end 
+
+
+function Katarina:getRDmg(target)
+	if target ~= 0 and CanCast(_R) then
+		local Damage = 0
+		local DamageAP = {375, 562.5, 750}
+		local DamageAD = {20, 35, 50, 65, 80}
+
+        if self.R:IsReady() then
+			Damage = (0.80 * myHero.BonusDmg + DamageAP[myHero.LevelSpell(_R)] + 0.2 * myHero.MagicDmg) + DamageAD[myHero.LevelSpell(_R)]
+		end
+		return myHero.CalcDamage(target.Addr, Damage)
+	end
+	return 0
+end
 
 
 function Katarina:ComboKat()
@@ -491,7 +500,7 @@ end
 
 function Katarina:CastETarget(unit)
     if IsValidTarget(unit) and self.E:IsReady() and GetDistanceSqr(unit) < self.E.Range * self.E.Range then
-        CastSpellToPos(unit.x, unit.z)
+        CastSpellToPos(unit.x, unit.z, _E)
     end
 end
 
@@ -500,7 +509,7 @@ function Katarina:CastEDagger(unit)
         for _, Daga in pairs(self.Dagger) do
                 local spot = Vector(Daga) + (Vector(unit) - Vector(Daga)):Normalized() * 50
                 local delay = 0.2
-                if GetTimeGame() - self.DelayDaga > 1.1 - delay then
+                if GetTimeGame() - self.DelayDaga > 1.0 - delay then
                     if IsValidTarget(unit, self.E.Range) and self.E:IsReady() and GetDistanceSqr(unit, spot) < self.W.Range * self.W.Range then
                     CastSpellToPos(spot.x, spot.z, _E)
                 end 
@@ -514,7 +523,7 @@ function Katarina:GetECast(unit)
 	if self.EonlyD then
 		self:CastEDagger(unit)
 	else
-		if self:CountDagger() > 0 then
+		if self.CountDagger > 0 then
 			self:CastEDagger(unit)
 		else
 			self:CastETarget(unit)
@@ -574,8 +583,28 @@ function Katarina:CanCastIsR()
     local targetR = GetTargetSelector(self.R.Range, 0)
     enemy = GetAIHero(targetC)
     if targetR ~= 0 then
-        if IsValidTarget(target, 500) and CountEnemyChampAroundObject(myHero.Addr, 500) >= 2 then
+        if IsValidTarget(target, 400) and CountEnemyChampAroundObject(myHero.Addr, 400) >= 2 then
             CastSpellTarget(myHero.Addr, _R)
+        end 
+    end
+end 
+
+
+function Katarina:ComboDamage()
+    for i ,enemys in pairs(self:GetEnemies()) do
+        local enemys = GetTargetSelector(1000)
+        target = GetAIHero(enemys)
+        if target ~= 0 then
+            if IsValidTarget(target, 1000) and target.IsValid and (self.Q:GetDamage(target) + self.E:GetDamage(target) + self:getRDmg(target) > target.HP) then
+                if self.CountDagger == 0 then
+                    if self.W:IsReady() and self.Q:IsReady() and self.R:IsReady() and self.E:IsReady() then
+                        CastSpellToPos(target.x, target.z, _E)
+                        CastSpellTarget(myHero.Addr, _W)
+                        CastSpellTarget(target.Addr, _Q)
+                        CastSpellTarget(myHero.Addr, _R)
+                    end 
+                end 
+            end 
         end 
     end
 end 
@@ -585,6 +614,8 @@ function Katarina:OnTick()
     self:AntiGapDash()
     self:KillSteal()
     self:CanCastIsR()
+
+    self:ComboDamage()
 
     if self.CancelR then
         self:ChancelR()
