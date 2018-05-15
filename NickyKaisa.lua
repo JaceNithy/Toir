@@ -2,7 +2,7 @@ IncludeFile("Lib\\TOIR_SDK.lua")
 
 Kaisa = class()
 
-local ScriptXan = 0.4
+local ScriptXan = 1.4
 local NameCreat = "Jace Nicky"
 
 
@@ -220,9 +220,6 @@ function Kaisa:OnTick()
     if self.LQ then
         self:CastLaneClear()
     end 
-    if self.GapW then
-        self:LogicW()
-    end 
     if self.CW then
         self:CastW()
     end 
@@ -315,27 +312,3 @@ function Kaisa:CastE()
         end 
     end 
 end 
-
-function Kaisa:LogicW()
-	for i,champ in pairs(GetEnemyHeroes()) do
-		if champ ~= 0  then
-			if not IsDead(champ) and not IsInFog(champ) then
-				hero = GetAIHero(champ)
-	            local data = {target = hero, LastVisablePos = Vector(hero), LastVisableTime = GetTimeGame()}
-	    		table.insert(self.ChampionInfoList, data)
-	    	end
-        end
-    end
-
-    for i = #self.ChampionInfoList, 1, -1 do
-	    if self.ChampionInfoList[i].target.IsDead then 
-	    	table.remove(self.ChampionInfoList, i)
-	    end
-
-	    if IsInFog(self.ChampionInfoList[i].target.Addr) and GetDistance(self.ChampionInfoList[i].LastVisablePos) < 1000 and GetTimeGame() - self.ChampionInfoList[i].LastVisableTime > 1 and GetTimeGame() - self.ChampionInfoList[i].LastVisableTime < 2 then
-	    	pos = Vector(myHero):Extended(self.ChampionInfoList[i].LastVisablePos, 2000)
-	    	CastSpellToPos(pos.x, pos.z, _W)
-	    	table.remove(self.ChampionInfoList, i)
-	    end
-    end
-end
