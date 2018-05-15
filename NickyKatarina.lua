@@ -2,7 +2,7 @@ IncludeFile("Lib\\SDK.lua")
 
 class "Katarina"
 
-local ScriptXan = 1.9
+local ScriptXan = 2.0
 local NameCreat = "Jace Nicky"
 function OnLoad()
     if GetChampName(GetMyChamp()) ~= "Katarina" then return end
@@ -286,7 +286,7 @@ function Katarina:IsUnderTurretEnemy(pos)			--Will Only work near myHero
 	for k,v in pairs(objects) do
 		if IsTurret(v) and not IsDead(v) and IsEnemy(v) and GetTargetableToTeam(v) == 4 then
 			local turretPos = Vector(GetPosX(v), GetPosY(v), GetPosZ(v))
-			if GetDistanceSqr(turretPos,pos) < 915*915 then
+			if GetDistanceSqr(turretPos,pos) < 775 + (turretPos.boundingRadius * 2)  then
 				return true
 			end
 		end
@@ -429,7 +429,7 @@ function Katarina:getRDmg(target)
 	if target ~= 0 and CanCast(_R) then
 		local Damage = 0
 		local DamageAP = {375, 562.5, 750}
-		local DamageAD = {20, 35, 50, 65, 80}
+		local DamageAD = {1.325302, 1.325302, 1.325302}
 
         if self.R:IsReady() then
 			Damage = (0.80 * myHero.BonusDmg + DamageAP[myHero.LevelSpell(_R)] + 0.2 * myHero.MagicDmg) + DamageAD[myHero.LevelSpell(_R)]
@@ -438,7 +438,6 @@ function Katarina:getRDmg(target)
 	end
 	return 0
 end
-
 
 function Katarina:ComboKat()
     for i, enemy in pairs(self:GetEnemies()) do
