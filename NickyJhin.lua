@@ -31,17 +31,22 @@ function Jhin:_Yadc()
 
     self:EveMenus()
 
+    self.rstack = 0
+    self.stackisR = 0
     self.IsMarked = nil
     self.Point = 0 
     self.UtimateOn = false
     self.Moving = false
     self.myLastPath = Vector(0,0,0)
-	self.targetLastPath = Vector(0,0,0)
+    self.targetLastPath = Vector(0,0,0)
+    self.ChampionInfoList = {}
     
     Callback.Add("Tick", function(...) self:OnTick(...) end)	
     Callback.Add("Draw", function(...) self:OnDraw(...) end)
     Callback.Add("UpdateBuff", function(unit, buff) self:OnUpdateBuff(unit, buff) end)
     Callback.Add("RemoveBuff", function(unit, buff) self:OnRemoveBuff(unit, buff) end)
+    Callback.Add("Update", function(...) self:OnUpdate(...) end)
+    Callback.Add("ProcessSpell", function(...) self:OnProcessSpell(...) end)
     Callback.Add("NewPath", function(...) self:OnNewPath(...) end)
     Callback.Add("DrawMenu", function(...) self:OnDrawMenu(...) end)
     Callback.Add("AntiGapClose", function(target, EndPos) self:OnAntiGapClose(target, EndPos) end)
@@ -82,6 +87,7 @@ function Jhin:EveMenus()
     self.UnTurret = self:MenuBool("Turret", true)
     self.AntiGapcloserE = self:MenuBool("AntiGapcloser [E]", true)
     self.Focus = self:MenuBool("Focus Marked", true)
+    self.Evade_R = self:MenuBool("Dont Dodge When R Is Active",true)
 
     self.Danger = self:MenuSliderInt("Danger", 4)
 	self.MaxRangeW = self:MenuSliderInt("Max R range", 2900)
@@ -136,14 +142,15 @@ function Jhin:OnDrawMenu()
             Menu_Text("--Misc--")
             self.Focus = Menu_Bool("Focus Marked [Jhin W]", self.Focus, self.menu)
             self.CancelR = Menu_Bool("Cancel [R]", self.CancelR, self.menu)
-            self.CheckR = Menu_Bool("Check [R] [MousePos]", self.CheckR, self.menu)
+            self.Evade_R = Menu_Bool("Dont Dodge When R Is Active",self.Evade_R,self.menu)
 			Menu_End()
         end
         if (Menu_Begin("Draws")) then
             self.DQ = Menu_Bool("Draw Q", self.DQ, self.menu)
             self.DW = Menu_Bool("Draw W", self.DW, self.menu)
             self.DE = Menu_Bool("Draw E", self.DE, self.menu)
-			self.DR = Menu_Bool("Draw R", self.DR, self.menu)
+            self.DR = Menu_Bool("Draw R", self.DR, self.menu)
+            self.CheckR = Menu_Bool("Check [R] [KillSteal]", self.CheckR, self.menu)
 			Menu_End()
         end
         if (Menu_Begin("Key Auto")) then
@@ -189,9 +196,16 @@ function Jhin:OnTick()
         self:FocusMak()
     end 
 
+    if self.LogicR then
+        self:LogicRJ()
+    end
+
     if self.CW then
         self:CastW()
     end 
+    if self.UtimateOn and self.Evade_R then
+        SetEvade(true)
+    end
 end 
 
 function Jhin:CanMove(unit)
@@ -279,6 +293,24 @@ function Jhin:IsPos(target)
 	return false
 end
 
+function Jhin:OnProcessSpell(unit,spell)
+    if unit.IsMe and spell.Name == "JhinRShot" then
+      if self.stackisR > 0 then
+        self.stackisR = self.stackisR - 1
+        end
+    end
+    if not unit.IsMe and self.UtimateOn and self.Evade_R then
+        SetEvade(true)
+    end
+end
+
+function Jhin:OnUpdate()
+    if self.UtimateOn and self.Evade_R then
+      SetEvade(true)
+    end
+end
+  
+
 local function GetDistanceSqr(p1, p2)
     p2 = GetOrigin(p2) or GetOrigin(myHero)
     return (p1.x - p2.x) ^ 2 + ((p1.z or p1.y) - (p2.z or p2.y)) ^ 2
@@ -302,10 +334,10 @@ function Jhin:CastW()
     local targetW = GetTargetSelector(self.W.range, 1)
     target = GetAIHero(targetW)
     if targetW ~= 0 then
-            if GetKeyPress(self.Combo) > 0 and IsValidTarget(target.Addr, self.MaxRangeW) then
-                if GetDistance(target.Addr) > self.MinRangeW then
-                    if not self.UtimateOn and self:IsPos(target) then
-                    local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
+            if GetKeyPress(self.Combo) > 0 and IsValidTarget(self.IsMarked.Addr, self.MaxRangeW) then
+                if GetDistance(self.IsMarked.Addr) > self.MinRangeW then
+                    if not self.UtimateOn then
+                    local CastPosition, HitChance, Position = self:GetWLinePreCore(self.IsMarked)
                     if HitChance >= 6 then
                         CastSpellToPos(CastPosition.x, CastPosition.z, _W)
                     end
@@ -319,10 +351,10 @@ function Jhin:FocusMak()
     local targetW = GetTargetSelector(self.W.range, 1)
     target = GetAIHero(targetW)
     if targetW ~= 0 then
-             if IsValidTarget(target.Addr, self.MaxRangeW) then
-                if GetDistance(target.Addr) > self.MinRangeW then
-                    if self:IsPos(target) and not self.UtimateOn then
-                    local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
+             if IsValidTarget(self.IsMarked.Addr, self.MaxRangeW) then
+                if GetDistance(self.IsMarked.Addr) > self.MinRangeW then
+                    if not self.UtimateOn then
+                    local CastPosition, HitChance, Position = self:GetWLinePreCore(self.IsMarked)
                     if HitChance >= 6 then
                         CastSpellToPos(CastPosition.x, CastPosition.z, _W)
                     end
@@ -363,6 +395,11 @@ function Jhin:OnUpdateBuff(unit, buff)
         self.IsMarked = unit
         self.Point = GetTimeGame()
     end 
+    if unit.IsMe and buff.Name == "JhinRShot" then
+        self.UtimateOn = true
+        SetLuaBasicAttackOnly(true)
+        SetLuaMoveOnly(true)
+    end
 end
 
 function Jhin:OnRemoveBuff(unit, buff)
@@ -370,6 +407,11 @@ function Jhin:OnRemoveBuff(unit, buff)
         self.IsMarked = nil
         self.Point = 0
     end 
+    if unit.IsMe and buff.Name == "JhinRShot" then
+        self.UtimateOn = false
+        SetLuaBasicAttackOnly(false)
+        SetLuaMoveOnly(false)
+    end
 end
 
 
@@ -398,6 +440,17 @@ function Jhin:GetECirclePreCore(target)
 end
 
 function Jhin:GetWLinePreCore(target)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(self.IsMarked.Addr, 0, self.W.delay, self.W.width, self.W.range, self.W.speed, myHero.x, myHero.z, false, true, 1, 0, 5, 5, 5, 5)
+	if self.IsMarked ~= nil then
+		 CastPosition = Vector(castPosX, target.y, castPosZ)
+		 HitChance = hitChance
+		 Position = Vector(unitPosX, target.y, unitPosZ)
+		 return CastPosition, HitChance, Position
+	end
+	return nil , 0 , nil
+end
+
+function Jhin:GetW2LinePreCore(target)
 	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.W.delay, self.W.width, self.W.range, self.W.speed, myHero.x, myHero.z, false, true, 1, 0, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
@@ -441,7 +494,7 @@ function Jhin:KillW()
              if IsValidTarget(target, self.MaxRangeW) then
                 if GetDistance(target.Addr) > self.MinRangeW then
                     if not self.UtimateOn and GetDamage("W", target) > target.HP then
-                    local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
+                    local CastPosition, HitChance, Position = self:GetW2LinePreCore(target)
                     if HitChance >= 6 then
                         CastSpellToPos(CastPosition.x, CastPosition.z, _W)
                     end
@@ -513,6 +566,30 @@ function Jhin:OnAntiGapClose(target, EndPos)
     	if self.AntiGapcloserE then
     		CastSpellToPos(myHero.x, myHero.z, _E) 
     	end
+    end
+end
+
+function Jhin:LogicRJ()
+	for i,champ in pairs(GetEnemyHeroes()) do
+		if champ ~= 0  then
+			if not IsDead(champ) and not IsInFog(champ) then
+				hero = GetAIHero(champ)
+	            local data = {target = hero, LastVisablePos = Vector(hero), LastVisableTime = GetTimeGame()}
+	    		table.insert(self.ChampionInfoList, data)
+	    	end
+        end
+    end
+
+    for i = #self.ChampionInfoList, 1, -1 do
+	    if self.ChampionInfoList[i].target.IsDead then 
+	    	table.remove(self.ChampionInfoList, i)
+	    end
+
+	    if self.UtimateOn and IsInFog(self.ChampionInfoList[i].target.Addr) and GetDistance(self.ChampionInfoList[i].LastVisablePos) < 4000 and GetTimeGame() - self.ChampionInfoList[i].LastVisableTime > 1 and GetTimeGame() - self.ChampionInfoList[i].LastVisableTime < 2 then
+	    	pos = Vector(myHero):Extended(self.ChampionInfoList[i].LastVisablePos, 4000)
+	    	CastSpellToPos(pos.x, pos.z, _R)
+	    	table.remove(self.ChampionInfoList, i)
+	    end
     end
 end
 
