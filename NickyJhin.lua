@@ -196,10 +196,6 @@ function Jhin:OnTick()
         self:FocusMak()
     end 
 
-    if self.LogicR then
-        self:LogicRJ()
-    end
-
     if self.CW then
         self:CastW()
     end 
@@ -566,30 +562,6 @@ function Jhin:OnAntiGapClose(target, EndPos)
     	if self.AntiGapcloserE then
     		CastSpellToPos(myHero.x, myHero.z, _E) 
     	end
-    end
-end
-
-function Jhin:LogicRJ()
-	for i,champ in pairs(GetEnemyHeroes()) do
-		if champ ~= 0  then
-			if not IsDead(champ) and not IsInFog(champ) then
-				hero = GetAIHero(champ)
-	            local data = {target = hero, LastVisablePos = Vector(hero), LastVisableTime = GetTimeGame()}
-	    		table.insert(self.ChampionInfoList, data)
-	    	end
-        end
-    end
-
-    for i = #self.ChampionInfoList, 1, -1 do
-	    if self.ChampionInfoList[i].target.IsDead then 
-	    	table.remove(self.ChampionInfoList, i)
-	    end
-
-	    if self.UtimateOn and IsInFog(self.ChampionInfoList[i].target.Addr) and GetDistance(self.ChampionInfoList[i].LastVisablePos) < 4000 and GetTimeGame() - self.ChampionInfoList[i].LastVisableTime > 1 and GetTimeGame() - self.ChampionInfoList[i].LastVisableTime < 2 then
-	    	pos = Vector(myHero):Extended(self.ChampionInfoList[i].LastVisablePos, 4000)
-	    	CastSpellToPos(pos.x, pos.z, _R)
-	    	table.remove(self.ChampionInfoList, i)
-	    end
     end
 end
 
