@@ -2,7 +2,7 @@ IncludeFile("Lib\\SDK.lua")
 
 class "Katarina"
 
-local ScriptXan = 2.0
+local ScriptXan = 2.1
 local NameCreat = "Jace Nicky"
 function OnLoad()
     if GetChampName(GetMyChamp()) ~= "Katarina" then return end
@@ -519,7 +519,7 @@ end
 
 
 function Katarina:GetECast(unit)
-	if self.EonlyD then
+	if self.EonlyD and not myHero.HasBuff("katarinarsound") then
 		self:CastEDagger(unit)
 	else
 		if self.CountDagger > 0 then
