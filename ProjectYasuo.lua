@@ -681,7 +681,7 @@ function ProjectYasuo:CastQDashStack()
     for k, v in pairs(self:GetEnemies(1100)) do
         if v ~= 0 then
             local target = GetAIHero(v)
-            for i, minion in pairs(self:EnemyMinionsTbl()) do
+            for i, minion in pairs(self:EnemyMinionsTbl(2000)) do
                 if minion ~= 0 then
                     if not self.Q.YQ3 then
                         if myHero.IsDash then
