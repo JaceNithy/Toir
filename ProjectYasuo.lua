@@ -327,6 +327,8 @@ function ProjectYasuo:OnTick()
         self:FleeEvade()
     end 
 
+    self:KillBatida()
+
     if self.Enalble_Mod_Skin then
 		ModSkin(self.Set_Skin)
     end
@@ -399,16 +401,16 @@ function ProjectYasuo:ComboQ()
                 self:CastR(target)
                 self:CastE(target)
             end 
-            if IsValidTarget(target, 2000) then
+            if IsValidTarget(target, 1500) then
                 if GetDistance(target) > self.E.Range then
-                    if self.E:IsReady() and not self.Q.YQ3 then
-                        local gap = (self:GetGapMinion(target) or self:GetGapMonster(target))
-                        if gap and gap ~= 0 and not self:IsUnderTurretEnemy(target) then
-                            CastSpellTarget(gap, _E)
+                    if self.E:IsReady() then
+                        local gaoo = (self:GetGapMinion(target) or self:GetGapMonster(target))
+                        if gaoo and gaoo ~= 0 and not self:IsUnderTurretEnemy(target) then
+                            CastSpellTarget(gaoo, _E)
                         end 
                     end 
                 end 
-            end 
+            end            
         end 
     end 
 end 
@@ -456,7 +458,6 @@ function ProjectYasuo:DashEndPos(target) -- Shulepin Ty!
     return Estent
 end
 
-
 function ProjectYasuo:GetGapMinion(target)
     GetAllUnitAroundAnObject(myHero.Addr, 1500)
     local bestMinion = nil
@@ -474,6 +475,46 @@ function ProjectYasuo:GetGapMinion(target)
     end
     return bestMinion
 end
+
+function ProjectYasuo:Flee(toPos)
+    if GetOrbMode() == 1 then
+        GetAllUnitAroundAnObject(myHero.Addr, 1500)--GetEnemyMinionAroundObject(myHero.Addr, 900)
+        local mousePos = toPos or Vector(GetMousePos())
+        local bestPos, distance = nil, math.huge
+        for k, a in pairs(pUnit) do
+            local v = GetUnit(a)            
+            if v and type(v) == 1 and IsValidTarget(v, self.E.Range) then             
+                local endPos = Vector(myHero) + (Vector(v)-Vector(myHero)):Normalized() * self.E.Range  
+                local dist = GetDistance(endPos, mousePos)          
+                if dist < GetDistance(mousePos) and dist < distance then                    
+                    bestPos = v 
+                    distance = dist
+                end
+            end
+        end     
+        if bestPos then             
+            CastSpellTarget(bestPos.Addr, _E)
+        end
+    end
+end
+
+function ProjectYasuo:Testes(target)
+    GetAllUnitAroundAnObject(myHero.Addr, 1500)
+    local bestMinion = nil
+    local closest = math.huge
+    local units = pUnit
+    for i, unit in pairs(units) do
+        if unit and unit ~= 0 and IsMinion(unit) and IsEnemy(unit) and not IsDead(unit) and not IsInFog(unit) and GetTargetableToTeam(unit) == 4 and not self:IsMarked(GetUnit(unit)) and GetDistance(GetUnit(unit)) < 475 then
+            local endPos = Vector(myHero) + (Vector(unit) - Vector(myHero)):Normalized() * self.E.Range  
+                local dist = GetDistance(endPos, target)          
+                if dist < GetDistance(target) and dist < distance then                    
+                closest = dist
+                bestMinion = v 
+            end
+        end     
+    end 
+    return bestMinion
+end 
 
 function ProjectYasuo:GetGapMonster(target)
     GetAllUnitAroundAnObject(myHero.Addr, 1500)
@@ -536,11 +577,38 @@ end
 function ProjectYasuo:IsOnEPath(eney, unit)
     Target = GetAIHero(eney)
     local pointSegment, pointLine, isOnSegment = VectorPointProjectionOnLineSegment(Vector(myHero), Vector(unit), self:DashEndPos(Vector(Target)))
-    if isOnSegment and GetDistance(Target, pointSegment) < 85*1.25 then
+    if isOnSegment and GetDistance(Target, pointSegment) < 95*1.25 then
         return true
     end
     return false
 end
+
+function ProjectYasuo:KillBatida()
+    for k, v in pairs(self:GetEnemies(1100)) do
+        if v ~= 0 then
+            local target = GetAIHero(v)
+            if IsValidTarget(target, 450) and not self.Q.YQ3 then
+                if self.Q:GetDamage(target) > target.HP then 
+                    self:CastQ(target)
+                else
+                    if self.Q.YQ3 then
+                        if IsValidTarget(target, 900) then
+                            CastQ3(target)
+                        end 
+                    end 
+                end 
+            end 
+            if IsValidTarget(target, 450) and self.E:GetDamage(target) > target.HP then 
+                self:CastE(target)
+            end 
+            if  IsValidTarget(target, 450) and (self.Q:GetDamage(target) + self.E:GetDamage(target) > target.HP) then 
+                self:CastE(target)
+                self:CastQ(target)
+                self:CastQ3(target)
+            end 
+        end 
+    end
+end 
 
 function ProjectYasuo:FleeEvade()
     if self.E:IsReady() then
@@ -570,9 +638,11 @@ function ProjectYasuo:MenuProject()
     self.menu_ComboQ = self:MenuBool("Use Q", true)
     self.menu_ComboE = self:MenuBool("Use E", true)
     self.AutoLevel = self:MenuBool("Use E", true)
+    self.AutoR = self:MenuBool("Use E", true)
 
     self.menu_ComboR = self:MenuBool("Use R", true)
     self.UtY = self:MenuSliderInt("Count [R] CanUse", 2)
+    self.knok = self:MenuBool("Knoke", true)
 
     --Modes 
     self.menu_Harass = self:MenuBool("Harass", true)
@@ -588,6 +658,11 @@ function ProjectYasuo:MenuProject()
     self.menu_AutoQ = self:MenuBool("Stack Q Active", true)
     self.Enalble_Mod_Skin = self:MenuBool("Enalble Mod Skin", true)
     self.Set_Skin = self:MenuSliderInt("Set Skin", 2)
+
+    self.R.Whitelist = {}
+    for k, v in pairs(self:GetEnemies(math.huge)) do
+        self.R.Whitelist[v.CharName] = ReadIniBoolean("Use [R] on ".. v.CharName, true) 
+    end
   end
   
 function ProjectYasuo:OnDrawMenu()
@@ -599,6 +674,16 @@ function ProjectYasuo:OnDrawMenu()
         self.menu_ComboE = Menu_Bool("Use E", self.menu_ComboE, self.menu)
         self.menu_ComboR = Menu_Bool("Use R", self.menu_ComboR, self.menu)
         self.AutoLevel = Menu_Bool("Auto Level", self.AutoLevel, self.menu)
+        Menu_Separator()
+        Menu_Text("--Settings [R]--")
+        self.knok = Menu_Bool("Use When X Enemies Knocked Up", self.knok, self.menu)
+        self.UtY = Menu_SliderInt("Min. Enemies to Use", self.UtY, 0, 5, self.menu)
+        if Menu_Begin("WhileList") then
+            for k, v in pairs(self:GetEnemies(math.huge)) do
+                self.R.Whitelist = Menu_Bool("Use [R] on ".. v.CharName, self.R.Whitelist)
+            end
+            Menu_End()  
+        end
         Menu_End()
     end 
     if (Menu_Begin("Modes")) then
@@ -720,11 +805,17 @@ function ProjectYasuo:CastE(target)
 end 
 
 function ProjectYasuo:CastR(target)
-    if self.R:IsReady() and IsValidTarget(target, self.R.Range) and self:LogiR(target) and not self:IsUnderTurretEnemy(target) then
-        CastSpellTarget(target.Addr, _R)
-    else 
-        if self:ComboDamage(target) > GetRealHP(target, 1) and self.R:IsReady() and IsValidTarget(target, self.R.Range) and self:LogiR(target) then
+    if self.R.Whitelist then
+        self.KnockedEnemies = {}     
+        if (CountBuffByType(target.Addr, 29) > 0 or CountBuffByType(target.Addr, 30) > 0 or GetBuffByName(target.Addr, "YasuoQ3Mis") > 0) then
+            table.insert(self.KnockedEnemies, target)
+        end
+        if self.R:IsReady() and IsValidTarget(target, self.R.Range) and #self.KnockedEnemies >= self.UtY and not self:IsUnderTurretEnemy(target) then
             CastSpellTarget(target.Addr, _R)
+        else 
+            if self:ComboDamage(target) > GetRealHP(target, 1) and self.R:IsReady() and IsValidTarget(target, self.R.Range) and self:LogiR(target) then
+                CastSpellTarget(target.Addr, _R)
+            end 
         end 
     end 
 end 
@@ -735,7 +826,7 @@ function ProjectYasuo:IsUnderTurretEnemy(pos)			--Will Only work near myHero
 	for k,v in pairs(objects) do
 		if IsTurret(v) and not IsDead(v) and IsEnemy(v) and GetTargetableToTeam(v) == 4 then
 			local turretPos = Vector(GetPosX(v), GetPosY(v), GetPosZ(v))
-			if GetDistanceSqr(turretPos, pos) < 950*950 then
+			if GetDistanceSqr(turretPos, pos) < 915*915 then
 				return true
 			end
 		end
@@ -840,7 +931,7 @@ function ProjectYasuo:EnemyJungleTbl(range)
     for i, obj in pairs(pUnit) do
         if obj ~= 0  then
             local minions = GetUnit(obj)
-            if not IsDead(minions.Addr) and not IsInFog(minions.Addr) and GetType(minions.Addr) == 3 then
+            if not IsEnemy(minions.Addr) and not IsDead(minions.Addr) and not IsInFog(minions.Addr) and GetType(minions.Addr) == 3 then
                 table.insert(result, minions)
             end
         end
