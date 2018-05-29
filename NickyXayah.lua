@@ -2,7 +2,7 @@ IncludeFile("Lib\\TOIR_SDK.lua")
 
 Xayah = class()
 
-local ScriptXan = 1.2
+local ScriptXan = 1.9
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -203,7 +203,7 @@ function Xayah:IsOnEPath(eney, feather)
     Target = GetAIHero(eney)
     local LineEnd = Vector(myHero) + (Vector(feather) - Vector(myHero)):Normalized() * GetDistance(feather)
     local pointSegment, pointLine, isOnSegment = VectorPointProjectionOnLineSegment(Vector(myHero), LineEnd, Vector(Target))
-    if isOnSegment and GetDistance(Target, pointSegment) <= 85 then
+    if isOnSegment and GetDistance(Target, pointSegment) <= 85*1.5 then
         return true
     end
     return false
