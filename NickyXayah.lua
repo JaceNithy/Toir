@@ -166,7 +166,7 @@ end
 
 function Xayah:OnCreateObject(obj)
     if obj and obj.IsValid and obj.NetworkId and obj.NetworkId ~= 0 then
-        if string.find(obj.Name, "Xayah_Base_Passive_Dagger_Mark") then
+        if string.find(obj.Name, "Feather") then
             self.Pull[obj.NetworkId] = obj
             self.CountPull = self.CountPull + 1
         end 
@@ -175,7 +175,7 @@ end
 
 function Xayah:OnDeleteObject(obj)
     if obj and obj.IsValid and obj.NetworkId and obj.NetworkId ~= 0 then
-        if string.find(obj.Name, "Xayah_Base_Passive_Dagger_Mark") then
+        if string.find(obj.Name, "Feather") then
             self.Pull[obj.NetworkId] = nil
             self.CountPull = self.CountPull - 1
         end 
