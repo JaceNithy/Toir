@@ -360,13 +360,16 @@ function XinZhao:XinLane()
 end 
 
 function XinZhao:XinJugle()
-    for i, mobs in pairs(self:EnemyJungleTbl(1100)) do
-        if mobs ~= 0 then
+    if CanCast(_Q) and (GetType(GetTargetOrb()) == 3) then
+		if (GetObjName(GetTargetOrb()) ~= "PlantSatchel" and GetObjName(GetTargetOrb()) ~= "PlantHealth" and GetObjName(GetTargetOrb()) ~= "PlantVision") then
+			mobs = GetUnit(GetTargetOrb())
             if GetPercentMP(myHero) >= self.hitminion then
+                if IsValidTarget(mobs, 1100) then
                 self:CastE(mobs)
                 self:CastQ(mobs)
                 if IsValidTarget(mobs, 900) then
                     CastSpellToPos(mobs.x, mobs.z, _W)
+                end 
                 end 
             end 
         end 
@@ -721,7 +724,7 @@ function XinZhao:EnemyJungleTbl(range)
     for i, obj in pairs(pUnit) do
         if obj ~= 0  then
             local minions = GetUnit(obj)
-            if not IsEnemy(minions.Addr) and not IsDead(minions.Addr) and not IsInFog(minions.Addr) and GetType(minions.Addr) == 3 then
+            if  IsJungleMonster(minions.Addr) and not IsDead(minions.Addr) and not IsInFog(minions.Addr) and GetType(minions.Addr) == 3 then
                 table.insert(result, minions)
             end
         end
