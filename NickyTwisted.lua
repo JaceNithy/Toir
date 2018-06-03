@@ -50,7 +50,9 @@ function Fate:OnTick()
     ---
     if GetOrbMode() == 1 then
         self:TwisCombo()
-    end 
+    elseif GetOrbMode == 2 then
+        self:TwisHarass()
+    end    
 end 
 
 function Fate:PickCard(card)
@@ -130,6 +132,19 @@ function Fate:TwisCombo()
         end 
     end 
 end
+
+function Fate:TwisHarass()
+    for k, v in pairs(self:GetEnemies(700)) do
+        if v ~= 0 then
+            local target = GetAIHero(v)
+            if IsValidTarget(target, 700) then
+                if self.CE and self.W:IsReady() and self:CanPick() and self.target then
+                    self:PickCard("Gold")
+                end 
+            end 
+        end 
+    end 
+end 
 
 function Fate:GetHeroes()
     SearchAllChamp()
