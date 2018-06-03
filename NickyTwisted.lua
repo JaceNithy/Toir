@@ -1,5 +1,5 @@
 --Do not copy anything without permission, if you copy the file you will respond for plagiarism
---@ Copyright: Jace Nicky.
+--@ Copyright: RMAN (Credts Total) att >JaceNicky
 
 IncludeFile("Lib\\SDK.lua")
 
