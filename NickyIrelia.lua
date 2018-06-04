@@ -27,14 +27,7 @@ function Irelia:_Top()
     self.AA = true 
     self.isWactive = false
     self.chargingW = 0
-    self.OverKill = 0
-    self.tickIndex = 0
-    self.ts_prio = {}
-    self.attackNow = false
-    self.CastTime = 0 --GetTimeGame()
-    self.CanCast = true
-    self._chargedCastedT = 0
-    self.Charging = false
+  
 
     --Spell
     self.IreliaE1 = false
