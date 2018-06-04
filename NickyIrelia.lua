@@ -72,14 +72,19 @@ function Irelia:OnTick()
     if  GetOrbMode() == 4 then
         self:LaneQ()
     end 
+    if GetOrbMode() == 2 then
+        self:LastH()
+    end 
     for k, v in pairs(self:GetEnemies(1100)) do
         if v ~= 0  and GetOrbMode() == 1 then
             local target = GetAIHero(v)
-            if IsValidTarget(target, 1100) then
+            if IsValidTarget(target, 800) then
                 if self.R:IsReady() and self:ComboDamage(target) then
-                        CastSpellToPos(target.x, target.z, _R)
-                    
+                    CastSpellToPos(target.x, target.z, _R)
                 end 
+                if self.Q:IsReady() and self:ComboDamage(target) then
+                    CastSpellTarget(target.Addr, _Q)
+                end
             end 
         end 
     end 
@@ -135,7 +140,7 @@ function Irelia:EveMenus()
      self.IsFa = self:MenuBool("Lane Safe", true)
 
      self.QMode = self:MenuComboBox("Mode [Q] [ TF ]", 1)
-     self.EMode = self:MenuComboBox("Mode [Q] [ TF ]", 1)
+     self.EMode = self:MenuComboBox("Mode [Q] [ TF ]", 0)
 
      self.EonlyD = self:MenuBool("Only on Dagger", true)
      self.FleeW = self:MenuBool("Flee [W]", true)
@@ -181,7 +186,7 @@ function Irelia:OnDrawMenu()
             Menu_Separator()
             Menu_Text("--Logic E--")
             self.CE = Menu_Bool("Use E", self.CE, self.menu)
-            self.EMode = Menu_ComboBox("[E] Mode", self.EMode, "MyHeroPos\0MousePos\0\0\0\0", self.menu)
+            self.EMode = Menu_ComboBox("[E] Mode", self.EMode, "ExtendPos\0MousePos\0\0\0\0", self.menu)
             Menu_Separator()
             Menu_Text("--Logic--")
             self.CR = Menu_Bool("Use R", self.CR, self.menu)
@@ -231,9 +236,10 @@ function Irelia:XinCombo()
     if targetC ~= 0 then
         if self.EMode == 0 then
             if self.E:IsReady() and IsValidTarget(target, 900) then
-                if EUser() then
-                    CastSpellToPos(myHero.x, myHero.z, _E)
-                end 
+                    if EUser() then
+                    local point2 = Vector(myHero):Extended(Vector(target), -900)
+                    CastSpellToPos(point2.x, point2.z, _E) 
+                end   
             end
         end 
         if self.EMode == 1 then
@@ -243,14 +249,17 @@ function Irelia:XinCombo()
                 end 
             end
         end 
-        if self.E:IsReady() and IsValidTarget(target, 800) then
+        if self.E:IsReady() and IsValidTarget(target, 800) then     
             for i, teste in pairs(self.Tributo) do
                 if self.CoutTributo == 1 and E2User() then
                     local CastPosition, HitChance, Position = self:GetELinePreCore(target)
                     local pos1 = Vector(teste.x, teste.z, teste.y)
                     local point = Vector(teste):Extended(Vector(CastPosition), 2000)
+    
+                        CastSpellToPos(point.x, point.z, _E) 
+                   -- end 
                     --if HitChance >= 6 then
-                       CastSpellToPos(point.x, point.z, _E) 
+                       
                    -- end 
                 end 
             end 
@@ -347,6 +356,18 @@ function Irelia:LaneQ()
     end               
 end
 
+function Irelia:LastH()
+    for i, minion in pairs(self:EnemyMinionsTbl(1100)) do
+        if minion ~= 0 then
+            if GetPercentMP(myHero) >= self.ManC then
+                if self.Q:IsReady() and IsValidTarget(minion, self.Q.Range) and self.Q:GetDamage(minion) > minion.HP  and not self:IsUnderTurretEnemy(minion) then
+                    CastSpellTarget(minion.Addr, _Q)
+                end 
+            end 
+        end 
+    end  
+end 
+
 function Irelia:KillSteal()
         local enemys = GetTargetSelector(1000, 0)
         target = GetAIHero(enemys)
@@ -407,6 +428,16 @@ function Irelia:GetGapMinion(target)
     return bestMinion
 end
 
+function Irelia:IsOnEPath(eney, feather)
+    Target = GetAIHero(eney)
+    local LineEnd = Vector(myHero) + (Vector(feather) - Vector(myHero)):Normalized() * GetDistance(feather)
+    local pointSegment, pointLine, isOnSegment = VectorPointProjectionOnLineSegment(Vector(myHero), LineEnd, Vector(Target))
+    if isOnSegment and GetDistance(Target, pointSegment) <= 300*1.25 then
+        return true
+    end
+    return false
+end
+
 function Irelia:OnDraw()
     if self.DQWER then return end
 
@@ -450,6 +481,10 @@ function Irelia:OnDraw()
             local pos1 = Vector(teste.x, teste.z, teste.y)
             local point = Vector(teste):Extended(Vector(target), 1500)
             DrawCircleGame(point.x , point.y, point.z, 150, Lua_ARGB(255,0,255,0))
+        end 
+        if EUser() then
+            local point2 = Vector(teste):Extended(Vector(target), -900)
+            DrawCircleGame(point2.x , point2.y, point2.z, 150, Lua_ARGB(255,0,255,0))
         end 
     end 
     end 
