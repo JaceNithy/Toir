@@ -228,9 +228,9 @@ function Irelia:XinCombo()
     target = GetAIHero(targetC)
     if targetC ~= 0 then
         if self.EMode == 0 then
-            if self.E:IsReady() and IsValidTarget(target, 900) then
+            if self.E:IsReady() and IsValidTarget(target, 800) then
                     if EUser() then
-                    local point2 = Vector(myHero):Extended(Vector(target), -900)
+                    local point2 = Vector(myHero):Extended(Vector(target), -200)
                     CastSpellToPos(point2.x, point2.z, _E) 
                 end   
             end
