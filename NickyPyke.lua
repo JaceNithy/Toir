@@ -290,6 +290,11 @@ function Pyke:CastE()
     if self.CE and tare ~= nil and IsValidTarget(tare, 475) and not self.QCharged then
         local point = Vector(myHero):Extended(Vector(tare), 475)
         CastSpellToPos(point.x, point.z, _E)
+    else
+        if self.CE and tare ~= nil and IsValidTarget(tare, 475) and not self.QCharged and myHero.HP < 50 then
+            local point = Vector(myHero):Extended(Vector(tare), -200)
+            CastSpellToPos(point.x, point.z, _E)
+        end 
     end 
 end 
 
