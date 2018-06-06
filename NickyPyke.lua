@@ -63,8 +63,9 @@ function Pyke:OnTick()
     if GetKeyPress(self.menu_key_combo) > 0 then
         self:CastE()
         self:CastW()
-        self:CastR()
     end 
+
+    self:CastR()
 
     local TargetQ = GetTargetSelector(1050, 1)
 	if TargetQ ~= 0 then
@@ -229,16 +230,61 @@ end
 function Pyke:getRDmg(target)
 	if target ~= 0 and CanCast(_R) then
 		local Damage = 0
-        local DamageAD = {13, 190, 240, 290, 340, 390, 440, 475, 510, 545, 580, 615, 635, 655}
-        local LevelSPel = {190, 240, 290, 340, 390, 440, 475, 510, 545, 580, 615, 635, 655}
 
-        if self.R:IsReady() then
-            --__PrintTextGame(tostring(myHero.BonusDmg))
-			Damage = (DamageAD[myHero.Level])
-		end
-		return myHero.CalcDamage(target.Addr, Damage)
+        if self.R:IsReady() and myHero.Level == 6 then
+			Damage = (190 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 7 then
+			Damage = (240 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 8 then
+			Damage = (290 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 9 then
+			Damage = (340 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 10 then
+			Damage = (390 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 11 then
+			Damage = (440 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 12 then
+			Damage = (475 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 13 then
+			Damage = (510 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 14 then
+			Damage = (545 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 15 then
+			Damage = (580 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 16 then
+			Damage = (615 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 17 then
+			Damage = (635 + myHero.TotalDmg)
+        end
+        if self.R:IsReady() and myHero.Level == 18 then
+			Damage = (655 + myHero.TotalDmg)
+        end
+        return myHero.CalcDamage(target.Addr, Damage)
 	end
 	return 0
+end
+
+function Pyke:RDamage(target) -- Ty Nechrito <3 THAKS <3 
+    local aa = myHero.TotalDmg
+    local dmg = aa
+  
+    if self.R:IsReady() then
+        dmg = dmg + self.getRDmg(target) > target.HP
+    end
+
+    dmg = self:RealDamage(target, dmg)
+    return dmg
 end
 
 
@@ -273,7 +319,10 @@ function Pyke:CastR()
     local merda = GetTargetSelector(850, 1)
     local targf = GetAIHero(merda)
     if targf ~= nil and IsValidTarget(targf, 850) and self:getRDmg(targf) > targf.HP then
-        CastSpellToPos(targf.x, targf.z, _R)
+        local CastPosition, HitChance, Position = self:GetQLinePreCore(targf)
+        if HitChance >= 5 then
+            CastSpellToPos(targf.x, targf.z, _R)
+        end     
     end 
 end 
 
@@ -340,6 +389,41 @@ function Pyke:GetQLinePreCore(target)
 		 return CastPosition, HitChance, Position
 	end
 	return nil , 0 , nil
+end
+
+function Pyke:GetRQLinePreCore(target)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.delay, self.R.width, self.R.Range, self.R.speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
+	if target ~= nil then
+		 CastPosition = Vector(castPosX, target.y, castPosZ)
+		 HitChance = hitChance
+		 Position = Vector(unitPosX, target.y, unitPosZ)
+		 return CastPosition, HitChance, Position
+	end
+	return nil , 0 , nil
+end
+
+function Pyke:RealDamage(target, damage)
+    if target.HasBuff("KindredRNoDeathBuff") or target.HasBuff("JudicatorIntervention") or target.HasBuff("FioraW") or target.HasBuff("ShroudofDarkness")  or target.HasBuff("SivirShield") then
+        return 0  
+    end
+    local pbuff = GetBuff(GetBuffByName(target, "UndyingRage"))
+    if target.HasBuff("UndyingRage") and pbuff.EndT > GetTimeGame() + 0.3  then
+        return 0
+    end
+    local pbuff2 = GetBuff(GetBuffByName(target, "ChronoShift"))
+    if target.HasBuff("ChronoShift") and pbuff2.EndT > GetTimeGame() + 0.3 then
+        return 0
+    end
+    if myHero.HasBuff("SummonerExhaust") then
+        damage = damage * 0.6;
+    end
+    if target.HasBuff("BlitzcrankManaBarrierCD") and target.HasBuff("ManaBarrier") then
+        damage = damage - target.MP / 2
+    end
+    if target.HasBuff("GarenW") then
+        damage = damage * 0.6;
+    end
+    return damage
 end
 
 function Pyke:OnDraw()
