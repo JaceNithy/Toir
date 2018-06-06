@@ -55,7 +55,7 @@ function Pyke:OnTick()
     local range = self:ChargeRangeQ(TempoCang)
     
     if CanCast(_Q) and not IsAttacked() and not  self.WUp then
-		self:LogicQ()
+		self:CastQ()
 	end
     if GetKeyPress(self.LBFlee) > 0 then
         self:FleeIS()
@@ -170,7 +170,7 @@ function Pyke:OnDrawMenu()
             Menu_Text("--Logic Q--")
             self.CQ = Menu_Bool("Use Q", self.CQ, self.menu)
             self.EMode = Menu_SliderInt("Charge InRange", self.EMode, 0, 250, self.menu)
-            self.qMode = Menu_ComboBox("Mode Combo Q : ", self.qMode, "Min Q\0Max Q\0\0\0", self.menu)
+            --self.qMode = Menu_ComboBox("Mode Combo Q : ", self.qMode, "Min Q\0Max Q\0\0\0", self.menu)
             Menu_Separator()
             Menu_Text("--Logic W--")
             self.CW = Menu_Bool("Use W", self.CW, self.menu)
@@ -204,52 +204,26 @@ function Pyke:OnDrawMenu()
 	Menu_End()
 end
 
-function Pyke:CastQ(target)
-	if target ~= 0 then
-        local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
-        local Collision = CountObjectCollision(0, target.Addr, myHero.x, myHero.z, CastPosition.x, CastPosition.y, self.Q.width, self.Q.MaxRange, 10)
-            if Collision == 0 then
-		local TempoCang = GetTimeGame() - self.CastTime
-		local range = self:ChargeRangeQ(TempoCang)
-		if not self.QCharged then
-			CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
-		else
-			if GetDistance(CastPosition) < range - 350 and self.qMode == 0 and HitChance >= 5 then
-				ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
-			elseif range == self.Q.MaxRange and GetDistance(CastPosition) < range and self.qMode == 1 and HitChance >= 5 then
-				ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
-			elseif CountEnemyChampAroundObject(myHero.Addr, GetTrueAttackRange()) > 0 then
-				for i, heros in ipairs(GetEnemyHeroes()) do
-					if heros ~= 0 then
-						local targetQ = GetAIHero(heros)
-						if IsValidTarget(targetQ.Addr, GetTrueAttackRange()) then
-							local CastPosition, HitChance, Position = self:GetQLinePreCore(targetQ)
-							if HitChance >= 5 and GetDistance(CastPosition) < range  then
-								ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
-							end
-						end
-					end
-				end
-			elseif range == self.Q.MaxRange and GetDistance(CastPosition) < range  and HitChance >= 5 then
-				ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
-			else
-				return
-			end
-		end
-	else
-		for i, heros in ipairs(GetEnemyHeroes()) do
-			if heros ~= 0 then
-				local targetQ = GetAIHero(heros)
-				if IsValidTarget(targetQ.Addr, GetTrueAttackRange()) then
-					local CastPosition, HitChance, Position = self:GetQLinePreCore(targetQ)
-					if HitChance >= 5 then
-						ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
-					end
-				end
-            end
-        end 
-		end
-	end
+function Pyke:CastQ()
+    local TargetQ = GetTargetSelector(self.Q.MaxRange, 1)
+	if TargetQ ~= 0 then
+        target = GetAIHero(TargetQ)
+        --if self.CMode == 0 then
+            local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
+            local TempoCang = GetTimeGame() - self.CastTime
+            local range = self:ChargeRangeQ(TempoCang)
+            if not self.QCharged then
+                CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
+                return
+            end 
+            if IsValidTarget(target, range - 350) then
+                local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
+                if HitChance >= 5 then
+                    ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
+                end   
+            end 
+        --end 
+    end 
 end
 
 function Pyke:getRDmg(target)
@@ -267,36 +241,6 @@ function Pyke:getRDmg(target)
 	return 0
 end
 
-
-function Pyke:LogicQ()
-	local TempoCang = GetTimeGame() - self.CastTime
-	local range = self:ChargeRangeQ(TempoCang)
-
-	local TargetQ = GetTargetSelector(self.Q.MaxRange, 1)
-	if TargetQ ~= 0 then
-		target = GetAIHero(TargetQ)
-		if GetDistance(target) > self.Q.MinRange and CountEnemyChampAroundObject(myHero.Addr, 800) == 0 and myHero.MP > 250 then
-			if GetKeyPress(self.menu_key_combo) > 0 then
-				self:CastQ(target)
-			end
-		end
-	end
-	for i,hero in pairs(GetEnemyHeroes()) do
-		if IsValidTarget(hero, self.Q.MaxRange - 200) then
-			enemy = GetAIHero(hero)
-			if GetDistance(enemy) > GetTrueAttackRange() then
-				if GetKeyPress(self.menu_key_combo) > 0 then
-					self:CastQ(enemy)
-				end
-			end
-			if not self:MoveCBuff(enemy) then 
-				if GetKeyPress(self.menu_key_combo) > 0 then
-					self:CastQ(enemy)
-				end
-			end
-		end
-	end
-end
 
 function Pyke:FleeIS()
     local mousePos = Vector(GetMousePos())
