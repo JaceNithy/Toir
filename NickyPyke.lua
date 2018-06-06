@@ -54,7 +54,7 @@ function Pyke:OnTick()
 	local TempoCang = GetTimeGame() - self.CastTime
     local range = self:ChargeRangeQ(TempoCang)
     
-    if CanCast(_Q) and not IsAttacked() and not  self.WUp then
+    if GetKeyPress(self.menu_key_combo) > 0 and CanCast(_Q) and not IsAttacked() and not  self.WUp then
 		self:CastQ()
 	end
     if GetKeyPress(self.LBFlee) > 0 then
@@ -234,7 +234,7 @@ function Pyke:getRDmg(target)
 
         if self.R:IsReady() then
             --__PrintTextGame(tostring(myHero.BonusDmg))
-			Damage = (DamageAD[myHero.Level] + 0.6 * myHero.BonusDmg) + LevelSPel[myHero.LevelSpell(_E)]
+			Damage = (DamageAD[myHero.Level])
 		end
 		return myHero.CalcDamage(target.Addr, Damage)
 	end
@@ -332,7 +332,7 @@ function Pyke:MoveCBuff(unit) -- CttBot by <3
 end
 
 function Pyke:GetQLinePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.Q.MaxRange, self.Q.speed, myHero.x, myHero.z, false, false, 1, 0, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.Q.MaxRange, self.Q.speed, myHero.x, myHero.z, false, true, 1, 0, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
