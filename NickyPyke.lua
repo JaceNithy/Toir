@@ -309,7 +309,7 @@ function Pyke:CastR()
     if targf ~= nil and IsValidTarget(targf, 850) and self:getRDmg(targf) > targf.HP then
         local CastPosition, HitChance, Position = self:GetQLinePreCore(targf)
         if HitChance >= 5 then
-            CastSpellToPos(targf.x, targf.z, _R)
+            CastSpellToPos(CastPosition.x, CastPosition.z, _R)
         end     
     end 
 end 
