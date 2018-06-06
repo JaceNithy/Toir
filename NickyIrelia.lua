@@ -4,7 +4,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 class "Irelia"
 
 
-local ScriptXan = 0.4
+local ScriptXan = 1.4
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -27,6 +27,8 @@ function Irelia:_Top()
     self.AA = true 
     self.isWactive = false
     self.chargingW = 0
+    self.CastTime = 0 
+    self.CanCast = true
   
 
     --Spell
@@ -35,7 +37,7 @@ function Irelia:_Top()
 
     --Spell
     self.Q = Spell({Slot = 0, SpellType = Enum.SpellType.Targetted, Range = 700})
-    self.W = Spell({Slot = 1, SpellType = Enum.SpellType.SkillShot, Range = 850, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
+    self.W = ({Slot = 0, delay = 0.25, MinRange = 450, MaxRange = 850, speed = 2000, width = 70})
     self.E = Spell({Slot = 2, SpellType = Enum.SpellType.SkillShot, Range = 1000, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
     self.R = Spell({Slot = 3, SpellType = Enum.SpellType.SkillShot, Range = 1200, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
 
@@ -46,12 +48,16 @@ function Irelia:_Top()
     AddEvent(Enum.Event.OnDrawMenu, function(...) self:OnDrawMenu(...) end)
     AddEvent(Enum.Event.OnCreateObject, function(...) self:OnCreateObject(...) end)
     AddEvent(Enum.Event.OnDeleteObject, function(...) self:OnDeleteObject(...) end)
+    AddEvent(Enum.Event.OnDoCast, function(...) self:OnDoCast(...) end)
 
     self:EveMenus()
 end 
 
 function Irelia:OnTick()
     if (IsDead(myHero.Addr) or myHero.IsRecall or IsTyping() or IsDodging()) or not IsRiotOnTop() then return end
+
+    local TempoCang = GetTimeGame() - self.CastTime
+    local range = self:ChargeRangeW(TempoCang)
 
     self:KillSteal()
 
@@ -60,7 +66,6 @@ function Irelia:OnTick()
         self:CastQExtende()
         self:CastQUse()
         self:CastR()
-        self:CastW()
     end 
     if  GetOrbMode() == 4 then
         self:LaneQ()
@@ -260,18 +265,15 @@ function Irelia:XinCombo()
     end                            
 end 
 
-function Irelia:CastW()
-    local targetC = GetTargetSelector(2000, 0)
-    target = GetAIHero(targetC)
-    if targetC ~= 0 then
-        if self.W:IsReady() and IsValidTarget(target, self.W.Range) then
-            CastSpellToPos(target.x, target.z, _W)
-        end 
-        if self.isWactive and IsValidTarget(target, self.W.Range) and GetTimeGame() - self.Wtime > 0.1 then
-            ReleaseSpellToPos(target.x, target.z, _W)
-        end 
-    end 
-end 
+function Irelia:OnDoCast(unit, spell)
+	local spellName = spell.Name:lower()
+	if unit.IsMe then
+		if spell.Name == "ireliawdefense" then
+			self.CastTime = GetTimeGame()
+            self.CanCast = false
+		end
+    end
+end
 
 function Irelia:CastQExtende()
     local mousePos = Vector(GetMousePos())
@@ -370,11 +372,6 @@ function Irelia:KillSteal()
 					CastSpellTarget(target.Addr, _Q)
 				end
 			end
-			if self.W:IsReady() then
-				if target ~= nil and target.IsValid and self.W:GetDamage(target) > target.HP then
-					CastSpellToPos(target.x, target.z, _W)
-				end
-            end
             if self.E:IsReady() then
                 if target ~= nil and target.IsValid and self.E:GetDamage(target) > target.HP then
                     for i, teste in pairs(self.Tributo) do
@@ -439,11 +436,6 @@ function Irelia:OnDraw()
         DrawCircleGame(posQ.x , posQ.y, posQ.z, self.Q.Range, Lua_ARGB(255,255,255,255))
     end
     
-    if self.W:IsReady() and self._Draw_W then 
-        local posQ = Vector(myHero)
-        DrawCircleGame(posQ.x , posQ.y, posQ.z, 300, Lua_ARGB(255,0,255,0))
-    end
-
     if self.E:IsReady() and self._Draw_E then 
         local posE = Vector(myHero)
         DrawCircleGame(posE.x , posE.y, posE.z, self.E.Range, Lua_ARGB(255,0,255,255))
@@ -569,12 +561,6 @@ function E2User()
 	end
 end
 
-function WUser()  
-    if GetSpellNameByIndex(myHero.Addr, _E) == "IreliaW" then
-        self.chargingW = GetTimeGame()
-    end 
-end
-
 function Irelia:GetELinePreCore(target)
 	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.E.delay, self.E.width, 1000, self.E.speed, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
 	if target ~= nil then
@@ -598,7 +584,7 @@ function Irelia:GetRLinePreCore(target)
 end
 
 function Irelia:GetWLinePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.W.delay, self.W.width, self.W.Range, self.W.speed, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.W.delay, self.W.width, self.W.Range, self.W.speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
@@ -606,6 +592,16 @@ function Irelia:GetWLinePreCore(target)
 		 return CastPosition, HitChance, Position
 	end
 	return nil , 0 , nil
+end
+
+function Irelia:ChargeRangeW(tempo)
+	local rangediff = self.W.MaxRange - self.W.MinRange
+	local miniomorange = self.W.MinRange
+	local AlcanceT = rangediff / 1.3 * tempo + miniomorange
+    if AlcanceT > self.W.MaxRange then 
+        AlcanceT = self.W.MaxRange 
+    end
+	return AlcanceT
 end
 
 function Irelia:EnemyMinionsTbl(range)
