@@ -67,18 +67,6 @@ function Pyke:OnTick()
 
     self:CastR()
 
-    local TargetQ = GetTargetSelector(1050, 1)
-	if TargetQ ~= 0 then
-		target = GetAIHero(TargetQ)
-		local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
-		local TempoCang = GetTimeGame() - self.CastTime
-		local range = self:ChargeRangeQ(TempoCang)
-		if self.QCharged and GetKeyPress(self.menu_key_combo) > 0 then
-			if range == self.Q.MaxRange and GetDistance(CastPosition) < range - 250 and HitChance >= 6 then
-				ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
-			end
-		end
-	end
 end 
 
 function Pyke:MenuBool(stringKey, bool)
