@@ -2,7 +2,7 @@ IncludeFile("Lib\\TOIR_SDK.lua")
 
 Pyke = class()
 
-local ScriptXan = 2.4
+local ScriptXan = 3.14
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -202,10 +202,12 @@ function Pyke:CastQ()
             local TempoCang = GetTimeGame() - self.CastTime
             local range = self:ChargeRangeQ(TempoCang)
             if not self.QCharged then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
+                if HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
+                end  
                 return
             end 
-            if IsValidTarget(target, range - 350) then
+            if IsValidTarget(target, range - self.EMode) then
                 local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
                 if HitChance >= 5 then
                     ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
@@ -312,7 +314,7 @@ function Pyke:CastR()
     local merda = GetTargetSelector(850, 1)
     local targf = GetAIHero(merda)
     if targf ~= nil and IsValidTarget(targf, 850) and self:getRDmg(targf) > targf.HP then
-        local CastPosition, HitChance, Position = self:GetQLinePreCore(targf)
+        local CastPosition, HitChance, Position = self:GetRQLinePreCore(targf)
         if HitChance >= 5 then
             CastSpellToPos(CastPosition.x, CastPosition.z, _R)
         end     
