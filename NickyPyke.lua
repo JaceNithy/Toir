@@ -2,7 +2,7 @@ IncludeFile("Lib\\TOIR_SDK.lua")
 
 Pyke = class()
 
-local ScriptXan = 3.15
+local ScriptXan = 3.16
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -303,7 +303,7 @@ end
 function Pyke:CastW()
     local v2 = GetTargetSelector(2000, 1)
     local tar2e = GetAIHero(v2)
-    if self.CW and tar2e ~= nil and IsValidTarget(tar2e, 2000) then
+    if self.CW and tar2e ~= nil and IsValidTarget(tar2e, 2000) and not self.QCharged then
         if CountEnemyChampAroundObject(myHero.Addr, 2000) >= self.CancelR then
             CastSpellTarget(myHero.Addr, _W)
         end 
