@@ -6,7 +6,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 
 class "Xerath"
 
-local ScriptXan = 0.8
+local ScriptXan = 0.9
 local NameCreat = "Jace Nicky"
 
 
@@ -81,7 +81,7 @@ function Xerath:OnTick()
         self:CastW()
     end 
 
-    if GetOrbMode() == 4 and not self.RActive then
+    if GetOrbMode() == 4 and not IsAttacked() and not self.RActive then
         self:Pest()
     end 
 
@@ -616,7 +616,7 @@ function Xerath:GetELinePreCore(target)
 end
 
 function Xerath:GetRCirclePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.Delay, 200, self.R.Range, self.R.Speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.delay, 200, self.R.Range, self.R.speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
