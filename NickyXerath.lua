@@ -6,7 +6,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 
 class "Xerath"
 
-local ScriptXan = 0.6
+local ScriptXan = 0.7
 local NameCreat = "Jace Nicky"
 
 
@@ -69,7 +69,8 @@ function Xerath:OnTick()
     local range = self:ChargeRangeQ(TempoCang)
 
     if GetOrbMode() == 1 and CanCast(_Q) and not IsAttacked() and not self.RActive then
-		self:CastQ()
+        self:CastQ1()
+        self:CastQ2()
     end
     
     if GetOrbMode() == 1 and not self.RActive then 
@@ -344,7 +345,7 @@ function Xerath:OnDrawMenu()
 	Menu_End()
 end
 
-function Xerath:CastQ()
+function Xerath:CastQ1()
     local TargetQ = GetTargetSelector(self.Q.MaxRange, 1)
 	if TargetQ ~= 0 then
         target = GetAIHero(TargetQ)
@@ -363,7 +364,10 @@ function Xerath:CastQ()
                 end   
             end 
         end 
-    end 
+    end              		
+end
+
+function Xerath:CastQ2()
     local TargetQ = GetTargetSelector(self.Q.MaxRange, 1)
 	if TargetQ ~= 0 then
         target = GetAIHero(TargetQ)
@@ -382,8 +386,8 @@ function Xerath:CastQ()
                 end   
             end 
         end 
-    end              		
-end
+    end 
+end 
 
 function Xerath:CastE()
     local TargetE = GetTargetSelector(self.E.Range, 1)
