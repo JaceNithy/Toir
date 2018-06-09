@@ -30,7 +30,7 @@ function Zoe:_Mid()
 
     self.SleepZoe = nil
     self.Colwndo = nil
-    self.PAA = false
+    self.PAA = nil
     self.ZoQ2 = { }
     self.ZoeRQ = { }
     self.rQ2ange = 0 
@@ -60,7 +60,7 @@ end
 function Zoe:OnTick()
     if (IsDead(myHero.Addr) or myHero.IsRecall or IsTyping() or IsDodging()) or not IsRiotOnTop() then return end
 
-    self.rQ2ange = (math.round(900 * myHero.MoveSpeed))
+    self.rQ2ange = (math.round(800 * myHero.MoveSpeed))
     --__PrintTextGame(tostring(math.round(myHero.MoveSpeed)))
 
     self:CastEIzi()
@@ -220,24 +220,13 @@ function Zoe:OnDraw()
 
     if self.Q:IsReady() and self.DQ then 
         local posQ = Vector(myHero.x, myHero.y, myHero.z)
-        DrawCircleGame(posQ.x , posQ.y, posQ.z, self.rQ2ange, Lua_ARGB(255,255,255,255))
+        DrawCircleGame(posQ.x , posQ.y, posQ.z, 1200, Lua_ARGB(255,255,255,255))
     end
 
     if self.Q:IsReady() and QRecast() then 
         local posQ2 = Vector(myHero.x, myHero.y, myHero.z)
         DrawCircleGame(posQ2.x , posQ2.y, posQ2.z, self.rQ2ange, Lua_ARGB(255,0,255,0))
     end
-    for k, v in pairs(GetEnemyHeroes()) do
-        if v ~= 0 then
-            local target = GetAIHero(v)
-            if target and target ~= 0 then
-                local pos = self:DashEndPos(target)
-                if pos then
-                    DrawCircleGame(pos.x, pos.y, pos.z, 150, Lua_ARGB(255, 255, 255, 255))
-                end
-            end 
-        end 
-    end 
 end 
 
 function Zoe:OnCreateObject(obj)
@@ -286,7 +275,7 @@ function Zoe:OnUpdateBuff(unit, buff)
         self.Colwndo = unit
     end
     if unit.IsMe and buff.Name == "zoepassivesheenbuff" then
-        self.PAA = true
+        self.PAA = unit
     end 
 end 
 
@@ -298,12 +287,12 @@ function Zoe:OnRemoveBuff(unit, buff)
         self.Colwndo = nil
     end
     if unit.IsMe and buff.Name == "zoepassivesheenbuff" then
-        self.PAA = false
+        self.PAA = nil
     end 
 end 
 
 function Zoe:GetQCirclePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.rQ2ange, self.Q.speed, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.rQ2ange, self.Q.speed, myHero.x, myHero.z, false, true, 1, 0, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
@@ -312,6 +301,7 @@ function Zoe:GetQCirclePreCore(target)
 	end
 	return nil , 0 , nil
 end
+
 
 function Zoe:GetRCirclePreCore(target)
 	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.delay, self.R.width, self.R.range, self.R.speed, myHero.x, myHero.z, false, true, 10, 0, 5, 5, 5, 5)
@@ -325,7 +315,7 @@ function Zoe:GetRCirclePreCore(target)
 end
 
 function Zoe:GetELinePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.E.delay, self.E.width, self.E.range, self.E.speed, myHero.x, myHero.z, false, true, 10, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.E.delay, self.E.width, self.E.range, self.E.speed, myHero.x, myHero.z, false, true, 1, 0, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
@@ -339,51 +329,42 @@ function Zoe:CZoe()
     local targetC = GetTargetSelector(1000, 0)
     target = GetAIHero(targetC)
     if targetC ~= 0 then
-        if not QRecast()  and IsValidTarget(target, 1000) then
-            --local Collision = CountCollision(myHero.x, myHero.z, target.x, target.z, self.Q.delay, self.Q.width, self.Q.range, self.Q.speed, 0, 5, 5, 5, 5)
-                local point = Vector(target):Extended(Vector(myHero), 1000)
-                local Collision = CountObjectCollision(0, target.Addr, myHero.x, myHero.z, point.x, point.y, self.Q.width, self.Q.range, 10)
-                if Collision == 0 then
-                --local PosEnd2 = Vector(myHero) + (Vector(target) - Vector(myHero)) * 800
-                --local Position = self:GetQCirclePreCore(point) 
-                CastSpellToPos(point.x, point.z, _Q)
-                elseif not QRecast() and IsValidTarget(target, self.rQ2ange) then
-                local point2 = Vector(target):Perpendicular2(Vector(myHero), 1000)
-                local startpos = Vector(myHero.x, myHero.y, myHero.z)
-		    local endpos = Vector(target.x, target.y, target.z)
-		    local dir = (endpos - startpos):Normalized()
-		    local pDir = dir:Perpendicular()
-                local Collision = CountObjectCollision(0, target.Addr, myHero.x, myHero.z, pDir.x, pDir.z, self.Q.width, self.Q.range, 10)
-                if Collision == 0 then
-                CastSpellToPos(pDir.x, pDir.y, _Q)
-            elseif not QRecast() and IsValidTarget(target,self.rQ2ange) then
-                local point3 = Vector(target):Perpendicular2(Vector(myHero), 1000)
-                local Collision = CountObjectCollision(0, target.Addr, myHero.x, myHero.z, point3.x, point3.z, self.Q.width, self.Q.range, 10)
-                if Collision == 0 then
-                CastSpellToPos(point.x, point.y, _Q)
-                end 
+        if not QRecast()  and IsValidTarget(target, 1200) then
+                local CastPosition, HitChance, Position = self:GetQCirclePreCore(target)
+                local point = Vector(myHero):Extended(Vector(CastPosition), -900)
+                if HitChance >= 5 then
+                    CastSpellToPos(point.x, point.z, _Q)
+                elseif not QRecast()  and IsValidTarget(target, 1200) then
+                    local CastPosition, HitChance, Position = self:GetQCirclePreCore(target)
+                    local point = Vector(myHero):Perpendicular(Vector(CastPosition), -900)
+                    if HitChance >= 5 then
+                        CastSpellToPos(point.x, point.z, _Q)
+                    elseif not QRecast()  and IsValidTarget(target, 1200) then
+                        local CastPosition, HitChance, Position = self:GetQCirclePreCore(target)
+                        local point = Vector(myHero):Perpendicular2(Vector(CastPosition), 900)
+                        if HitChance >= 5 then
+                            CastSpellToPos(point.x, point.z, _Q)
+                        end 
+                    end 
                 end 
             end 
         end 
         for _, Daga in pairs(self.ZoeRQ) do
-            --if Daga > 0 then
             local point = Vector(myHero):Extended(Vector(target), 1000)
-            
-            if IsValidTarget(target, 1000) and GetDistance(target) > 600 then
+            if IsValidTarget(target, 1000 + self.R.range) and GetDistance(target) > 600 then
                 CastSpellToPos(point.x, point.z, _R)
-            --end 
-            end 
+           -- end 
         end 
     end 
     if QRecast() and IsValidTarget(target, self.rQ2ange) then
         local CastPosition, HitChance, Position = self:GetQCirclePreCore(target)
         if HitChance >= 5 then
-            DelayAction(function() CastSpellToPos_2(CastPosition.x, CastPosition.z, _Q) end, 0.1) 
+            DelayAction(function() CastSpellToPos_2(CastPosition.x, CastPosition.z, _Q) end, 0.25) 
         end 
     elseif QRecast() and IsValidTarget(target, 800) then
         local CastPosition, HitChance, Position = self:GetQCirclePreCore(target)
         if HitChance >= 5 then
-            DelayAction(function() CastSpellToPos_2(CastPosition.x, CastPosition.z, _Q) end, 0.1) 
+            DelayAction(function() CastSpellToPos_2(CastPosition.x, CastPosition.z, _Q) end, 0.25) 
         end 
     end 
     if IsValidTarget(target, self.E.range) then
@@ -392,31 +373,28 @@ function Zoe:CZoe()
             DelayAction(function() CastSpellToPos_2(CastPosition.x, CastPosition.z, _E) end, 0) 
         end 
     end 
-   --[[ if IsValidTarget(target, 1500)  then
-        for i, morra in pairs(self.ZoeRQ) do
-            if morra ~= 0 then
-                local CastPosition, HitChance, Position = self:GetRCirclePreCore(target)
-                if HitChance >= 5 then
-                    DelayAction(function() CastSpellToPos(CastPosition.x, CastPosition.z, _R) end, 0) 
-                end 
-            end 
-        end 
-    end ]]
 end 
 
 function Zoe:CastEIzi()
     local targetC = GetTargetSelector(2000, 0)
     target = GetAIHero(targetC)
     if targetC ~= 0 then
-        if GetKeyPress(self.menu_key_combo) > 0  and IsValidTarget(target.Addr, self.E.range + 600) then
-			local CastPosition, HitChance, Position = self:GetELinePreCore(target)
-			local step = GetDistance(CastPosition) / 600
-			for i = 100 , 600, 100 do
-				local p = Vector(myHero):Extended(CastPosition, step * i)
+        if GetKeyPress(self.menu_key_combo) > 0  and IsValidTarget(target.Addr, self.E.range + 2000) then
+            local CastPosition, HitChance, Position = self:GetELinePreCore(target)
+			for i = 100 , 900, 100 do
+				local p = Vector(myHero):Extended(CastPosition, i)
                 if IsWall(p.x, p.y, p.z) then
                     CastSpellToPos(p.x, p.z, _E)
+                    return
 				end
             end
+            if HitChance >= 6 then
+                CastSpellToPos(CastPosition.x, CastPosition.z, _E)
+            else
+                if HitChance >= 6 then
+                    CastSpellToPos(p.x, p.z, _E)
+                end 
+            end 
         end 
     end 
 end 
