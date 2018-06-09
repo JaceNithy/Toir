@@ -6,7 +6,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 
 class "Xerath"
 
-local ScriptXan = 0.7
+local ScriptXan = 0.8
 local NameCreat = "Jace Nicky"
 
 
@@ -34,7 +34,7 @@ function Xerath:_Mid()
     self.RStack = 0
     self.SpellStack = 0 
 
-    self.Q = ({Slot = 0, delay = 0.25, MinRange = 750, MaxRange = 1550, speed = 2000, width = 70})
+    self.Q = ({Slot = 0, delay = 0.25, MinRange = 700, MaxRange = 1500, speed = 2000, width = 70})
     self.W = Spell({Slot = 1, SpellType = Enum.SpellType.SkillShot, Range = 1100, SkillShotType = Enum.SkillShotType.Circle, Collision = false, Width = 160, Delay = 0.25, Speed = 1600})
     self.E = Spell({Slot = 2, SpellType = Enum.SpellType.SkillShot, Range = 1000, SkillShotType = Enum.SkillShotType.Line, Collision = true, Width = 160, Delay = 0.25, Speed = 1600})
     self.R = Spell({Slot = 3, SpellType = Enum.SpellType.SkillShot, Range = 3200, SkillShotType = Enum.SkillShotType.Circle, Collision = false, Width = 160, Delay = 0.25, Speed = 1000})
