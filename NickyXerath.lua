@@ -6,7 +6,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 
 class "Xerath"
 
-local ScriptXan = 0.4
+local ScriptXan = 0.5
 local NameCreat = "Jace Nicky"
 
 
@@ -37,7 +37,7 @@ function Xerath:_Mid()
     self.Q = ({Slot = 0, delay = 0.25, MinRange = 750, MaxRange = 1550, speed = 2000, width = 70})
     self.W = Spell({Slot = 1, SpellType = Enum.SpellType.SkillShot, Range = 1100, SkillShotType = Enum.SkillShotType.Circle, Collision = false, Width = 160, Delay = 0.25, Speed = 1600})
     self.E = Spell({Slot = 2, SpellType = Enum.SpellType.SkillShot, Range = 1000, SkillShotType = Enum.SkillShotType.Line, Collision = true, Width = 160, Delay = 0.25, Speed = 1600})
-    self.R = Spell({Slot = 3, SpellType = Enum.SpellType.SkillShot, Range = 3200, SkillShotType = Enum.SkillShotType.Circle, Collision = false, Width = 160, Delay = 0.25, Speed = 1600})
+    self.R = Spell({Slot = 3, SpellType = Enum.SpellType.SkillShot, Range = 3200, SkillShotType = Enum.SkillShotType.Circle, Collision = false, Width = 160, Delay = 0.25, Speed = 1000})
 
     self.Itern = { ["KatarinaR"] = true, ["AlZaharNetherGrasp"] = true, ["TwistedFateR"] = true, ["VelkozR"] = true, ["InfiniteDuress"] = true, ["JhinR"] = true, ["CaitlynAceintheHole"] = true, ["UrgotSwap2"] = true, ["LucianR"] = true, ["GalioIdolOfDurand"] = true, ["MissFortuneBulletTime"] = true, ["XerathLocusPulse"] = true}
 
@@ -356,7 +356,7 @@ function Xerath:CastQ()
                 CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
                 return
             end 
-            if IsValidTarget(target, range - 350) then
+            if IsValidTarget(target, range - 250) then
                 local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
                 if HitChance >= 5 then
                     ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
@@ -375,7 +375,7 @@ function Xerath:CastQ()
                 CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
                 return
             end 
-            if IsValidTarget(target, range - 350) then
+            if IsValidTarget(target, range - 250) then
                 local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
                 if HitChance >= 5 then
                     ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
@@ -484,7 +484,7 @@ function Xerath:Pest()
                 CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
                 return
             end 
-            if IsValidTarget(target, range - 350) then
+            if IsValidTarget(target, range - 240) then
                 local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
                 if HitChance >= 5 then
                     ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
@@ -612,7 +612,7 @@ function Xerath:GetELinePreCore(target)
 end
 
 function Xerath:GetRCirclePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.delay, self.R.width, self.R.Range, self.R.speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.Delay, 150, self.R.Range, self.R.Speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
