@@ -70,8 +70,10 @@ end
 
 function Lantern:CanCastLantern()
     for i, Lanterna in pairs(self.Lanterned) do
-        if Lanterna ~= 0 and GetKeyPress(self.keycombo) == 0 then
-            BasicAttack(Lanterna)
+        if Lanterna ~= 0 then
+            if GetKeyPress(self.keycombo) == 0 then
+                BasicAttack(Lanterna)
+            end 
         end 
     end 
 end 
