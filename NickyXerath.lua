@@ -6,7 +6,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 
 class "Xerath"
 
-local ScriptXan = 0.5
+local ScriptXan = 0.6
 local NameCreat = "Jace Nicky"
 
 
@@ -612,7 +612,7 @@ function Xerath:GetELinePreCore(target)
 end
 
 function Xerath:GetRCirclePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.Delay, 150, self.R.Range, self.R.Speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.Delay, 200, self.R.Range, self.R.Speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
