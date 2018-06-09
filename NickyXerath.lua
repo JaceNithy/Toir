@@ -6,7 +6,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 
 class "Xerath"
 
-local ScriptXan = 0.9
+local ScriptXan = 1.20
 local NameCreat = "Jace Nicky"
 
 
@@ -33,6 +33,7 @@ function Xerath:_Mid()
     self.RActive = false
     self.RStack = 0
     self.SpellStack = 0 
+    self.DelayR = 0
 
     self.Q = ({Slot = 0, delay = 0.25, MinRange = 700, MaxRange = 1500, speed = 2000, width = 70})
     self.W = Spell({Slot = 1, SpellType = Enum.SpellType.SkillShot, Range = 1100, SkillShotType = Enum.SkillShotType.Circle, Collision = false, Width = 160, Delay = 0.25, Speed = 1600})
@@ -422,13 +423,7 @@ function Xerath:AtiveR()
 	if TargetR ~= 0 then
         target = GetAIHero(TargetR)
         if IsValidTarget(target, self.R.Range) then
-            self.R:Cast(myHero)
-        end 
-        if self.RActive and IsValidTarget(target, self.R.Range) then
-            local CastPosition, HitChance, Position = self:GetRCirclePreCore(target)
-            if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _R)
-            end 
+            CastSpellTarget(myHero.Addr, _R)
         end 
     end 
 end 
@@ -440,12 +435,6 @@ function Xerath:AtiveR2()
         if IsValidTarget(target, self.R.Range) and self:RDamage(target) > target.HP then
             CastSpellTarget(myHero.Addr, _R)
         end 
-        if self.RActive and IsValidTarget(target, self.R.Range) then
-            local CastPosition, HitChance, Position = self:GetRCirclePreCore(target)
-            if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _R)
-            end 
-        end 
     end 
 end 
 
@@ -455,8 +444,9 @@ function Xerath:CanR()
         target = GetAIHero(TargetR)
         if self.RActive and IsValidTarget(target, self.R.Range) then
             local CastPosition, HitChance, Position = self:GetRCirclePreCore(target)
-            if HitChance >= 5 then
+            if HitChance >= 5 and GetTimeGame() - self.DelayR >= 1 then
                 CastSpellToPos(CastPosition.x, CastPosition.z, _R)
+                self.DelayR = GetTimeGame()
             end 
         end 
     end 
@@ -468,9 +458,10 @@ function Xerath:CanR2()
         target = GetAIHero(TargetR)
         if self.RActive and IsValidTarget(target, self.R.Range) and self:RDamage(target) > target.HP then
             local CastPosition, HitChance, Position = self:GetRCirclePreCore(target)
-            if HitChance >= 5 then
+            if HitChance >= 5 and GetTimeGame() - self.DelayR >= 1 then
                 CastSpellToPos(CastPosition.x, CastPosition.z, _R)
-            end 
+                self.DelayR = GetTimeGame()
+            end  
         end 
     end 
 end 
@@ -616,7 +607,7 @@ function Xerath:GetELinePreCore(target)
 end
 
 function Xerath:GetRCirclePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.delay, 200, self.R.Range, self.R.speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, 1, 200, self.R.Range, 2000, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
