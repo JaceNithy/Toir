@@ -6,7 +6,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 
 class "Xerath"
 
-local ScriptXan = 1.20
+local ScriptXan = 1.30
 local NameCreat = "Jace Nicky"
 
 
@@ -56,9 +56,14 @@ function Xerath:_Mid()
 end 
 
 function Xerath:OnVision(unit, state)
-    if state ~= false then return end
-    if self.RActive and self.target and unit.NetworkId == self.target.NetworkId then
-        CastSpellToPos(unit.x, unit.z, _R)
+    local TargetR = GetTargetSelector(self.R.Range, 1)
+    target = GetAIHero(TargetR)
+    if state ~= false then 
+        if self.RActive then
+            if unit.NetworkId == target.NetworkId then
+                CastSpellToPos(unit.x, unit.z, _R)
+            end 
+        end    
     end 
 end 
 
@@ -72,6 +77,7 @@ function Xerath:OnTick()
     if GetOrbMode() == 1 and CanCast(_Q) and not IsAttacked() and not self.RActive then
         self:CastQ1()
         self:CastQ2()
+        self:LogicQ()
     end
     
     if GetOrbMode() == 1 and not self.RActive then 
@@ -119,6 +125,11 @@ function Xerath:OnTick()
     else
         self.RStack = 0
     end
+    if self.RActive then
+        SetEvade(true)
+    else 
+        SetEvade(false)
+    end 
 end 
 
 function Xerath:OnProcessSpell(unit, spell)
@@ -144,6 +155,7 @@ function Xerath:OnUpdateBuff(source, unit, buff, stacks)
         self.RActive = true
         SetLuaMoveOnly(true)
         SetLuaBasicAttackOnly(true)
+        SetEvade(true)
         self.SpellStack = self.RStack
     end
 end
@@ -158,6 +170,7 @@ function Xerath:OnRemoveBuff(unit, buff)
         self.RActive = false
         SetLuaMoveOnly(false)
         SetLuaBasicAttackOnly(false)
+        SetEvade(false)
         self.SpellStack = 0
     end 
 end
@@ -390,6 +403,28 @@ function Xerath:CastQ2()
     end 
 end 
 
+function Xerath:LogicQ()
+    local TargetQ = GetTargetSelector(GetTrueAttackRange(), 1)
+	if TargetQ ~= 0 then
+        target = GetAIHero(TargetQ)
+        --if self.CMode == 0 then
+            local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
+            local TempoCang = GetTimeGame() - self.CastTime
+            local range = self:ChargeRangeQ(TempoCang)
+            if not self.QCharged then
+                CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
+                return
+            end 
+            if IsValidTarget(target,  GetTrueAttackRange()) then
+                local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
+                if HitChance >= 5 then
+                    ReleaseSpellToPos(CastPosition.x, CastPosition.z, _Q)
+                end   
+            end 
+        --end 
+    end  
+end 
+
 function Xerath:CastE()
     local TargetE = GetTargetSelector(self.E.Range, 1)
 	if TargetE ~= 0 then
@@ -461,7 +496,13 @@ function Xerath:CanR2()
             if HitChance >= 5 and GetTimeGame() - self.DelayR >= 1 then
                 CastSpellToPos(CastPosition.x, CastPosition.z, _R)
                 self.DelayR = GetTimeGame()
-            end  
+            elseif self.RActive and IsValidTarget(target, self.R.Range) then
+                local CastPosition, HitChance, Position = self:GetRCirclePreCore(target)
+                if HitChance >= 5 and GetTimeGame() - self.DelayR >= 1 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _R)
+                    self.DelayR = GetTimeGame()
+                end 
+            end 
         end 
     end 
 end 
@@ -585,7 +626,7 @@ function Xerath:GetQLinePreCore(target)
 end
 
 function Xerath:GetWCirclePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.W.delay, self.W.width, self.W.Range, self.W.speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, 0.25, 200, self.W.Range, 1500, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
@@ -596,7 +637,7 @@ function Xerath:GetWCirclePreCore(target)
 end
 
 function Xerath:GetELinePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.E.delay, 100, self.E.Range, self.E.speed, myHero.x, myHero.z, false, true, 1, 0, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, 0.25, 30, self.E.Range, 2300, myHero.x, myHero.z, false, true, 1, 0, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
