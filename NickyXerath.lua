@@ -6,7 +6,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 
 class "Xerath"
 
-local ScriptXan = 1.40
+local ScriptXan = 1.50
 local NameCreat = "Jace Nicky"
 
 
@@ -475,7 +475,7 @@ end
 
 function Xerath:CanR()
     local TargetR = GetTargetSelector(self.R.Range, 1)
-	if TargetR ~= 0 then
+	if TargetR ~= nil then
         target = GetAIHero(TargetR)
         if self.RActive and IsValidTarget(target, self.R.Range) then
             local CastPosition, HitChance, Position = self:GetRCirclePreCore(target)
@@ -489,7 +489,7 @@ end
 
 function Xerath:CanR2()
     local TargetR = GetTargetSelector(self.R.Range, 1)
-	if TargetR ~= 0 then
+	if TargetR ~= nil then
         target = GetAIHero(TargetR)
         if self.RActive and IsValidTarget(target, self.R.Range) and self:RDamage(target) > target.HP then
             local CastPosition, HitChance, Position = self:GetRCirclePreCore(target)
