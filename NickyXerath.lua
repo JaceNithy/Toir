@@ -6,7 +6,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 
 class "Xerath"
 
-local ScriptXan = 1.30
+local ScriptXan = 1.40
 local NameCreat = "Jace Nicky"
 
 
@@ -497,8 +497,7 @@ function Xerath:CanR2()
                 CastSpellToPos(CastPosition.x, CastPosition.z, _R)
                 self.DelayR = GetTimeGame()
             elseif self.RActive and IsValidTarget(target, self.R.Range) then
-                local CastPosition, HitChance, Position = self:GetRCirclePreCore(target)
-                if HitChance >= 5 and GetTimeGame() - self.DelayR >= 1 then
+                if HitChance >= 5 and GetTimeGame() - self.DelayR >= 0.25 then
                     CastSpellToPos(CastPosition.x, CastPosition.z, _R)
                     self.DelayR = GetTimeGame()
                 end 
