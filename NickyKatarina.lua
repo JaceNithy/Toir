@@ -196,7 +196,7 @@ function Katarina:CastR(target)
 end
 
 function Katarina:AutoDagger()
-    if #self:GetEnemies(800) == 0 then
+    if #self:GetEnemies(1000) == 0 then
         if self.CountDagger > 0 and self.E:IsReady() and GetKeyPress(86) == 0 then
             for _, Daga in pairs(self.Dagger) do
                 local delay = 0.2
