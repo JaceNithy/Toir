@@ -344,7 +344,7 @@ function Vayne:MenuVayne()
 
     --Add R
     self.CR = self:MenuBool("Combo R", true)
-    self.RAmount = self:MenuSliderInt("Count [Around] Enemys", 2)
+    self.RAmount = self:MenuSliderInt("Count [Around] Enemys", 3)
     self.Mana1 = self:MenuSliderInt("Mana", 15)
     self.Mana2 = self:MenuSliderInt("Mana", 50)
     self.Mana3 = self:MenuSliderInt("Mana", 470)
