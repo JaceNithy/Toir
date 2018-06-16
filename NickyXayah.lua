@@ -1,8 +1,9 @@
-IncludeFile("Lib\\TOIR_SDK.lua")
+IncludeFile("Lib\\SDK.lua")
 
-Xayah = class()
 
-local ScriptXan = 1.9
+class "Xayah"
+
+local ScriptXan = 0.1
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -15,26 +16,324 @@ end
 
 function Xayah:_adc()
 
-    self.Q = Spell(_Q, 1075)
-    self.W = Spell(_W, GetTrueAttackRange())
-    self.E = Spell(_E, math.huge)
-    self.R = Spell(_R, 1040)
+    self.WALL_SPELLS = { 
+        ["Aatrox"]                      = {_E},
+        ["Ahri"]                      = {_Q,_E},
+        ["Akali"]                      = {_Q},
+        ["Amumu"]                      = {_Q},
+        ["Anivia"]                      = {_Q,_E},
+        ["Annie"]                      = {_Q},
+        ["Ashe"]                      = {_W,_R},
+        ["AurelionSol"]                      = {_Q},
+        ["Bard"]                      = {_Q},
+        ["Blitzcrank"]                      = {_Q},
+        ["Brand"]                      = {_Q,_R},
+        ["Braum"]                      = {_Q,_R},
+        ["Caitlyn"]                      = {_Q,_E,_R},
+        ["Cassiopeia"]                      = {_W,_E},
+        ["Corki"]                      = {_Q,_R},
+        ["Diana"]                      = {_Q},
+        ["DrMundo"]                      = {_Q},
+        ["Draven"]                      = {_Q,_E,_R},
+        ["Ekko"]                      = {_Q},
+        ["Elise"]                      = {_Q,_E},
+        ["Evelynn"]                      = {_Q},
+        ["Ezreal"]                      = {_Q,_W,_R},
+        ["FiddleSticks"]                      = {_E},
+        ["Fizz"]                      = {_R},
+        ["Galio"]                      = {_Q},
+        ["Gangplank"]                      = {_Q},
+        ["Gnar"]                      = {_Q},
+        ["Gragas"]                      = {_Q,_R},
+        ["Graves"]                      = {_Q,_R},
+        ["Heimerdinger"]                      = {_W},
+        ["Illaoi"]                      = {_Q},
+        ["Irelia"]                      = {_R},
+        ["Ivern"]                      = {_Q},
+        ["Janna"]                      = {_Q,_W},
+        ["Jayce"]                      = {_Q},
+        ["Jhin"]                      = {_Q,_R},
+        ["Jinx"]                      = {_W,_R},
+        ["Kaisa"]                      = {_Q,_W},
+        ["Kalista"]                      = {_Q},
+        ["Karma"]                      = {_Q},
+        ["Kassadin"]                      = {_Q},
+        ["Xayah"]                      = {_Q,_R},
+        ["Kayle"]                      = {_Q},
+        ["Kennen"]                      = {_Q},
+        ["KhaZix"]                      = {_W},
+        ["Kindred"]                      = {_Q},
+        ["Kled"]                      = {_Q},
+        ["KogMaw"]                      = {_Q,_E},
+        ["Leblanc"]                      = {_Q,_E},
+        ["Leesin"]                      = {_Q},
+        ["Ivern"]                      = {_Q},
+        ["Leona"]                      = {_E},
+        ["Lissandra"]                      = {_E},
+        ["Lucian"]                      = {_W,_R},
+        ["Lulu"]                      = {_Q},
+        ["Lux"]                      = {_Q,_E},
+        ["Malphite"]                      = {_Q},
+        ["Missfortune"]                      = {_R},
+        ["Morgana"]                      = {_Q},
+        ["Nami"]                      = {_W,_R},
+        ["Nautilus"]                      = {_Q},
+        ["Nocturne"]                      = {_Q},
+        ["Ornn"]                      = {_R},
+        ["Pantheon"]                      = {_Q},
+        ["Quinn"]                      = {_Q},
+        ["Rakan"]                      = {_Q},
+        ["RekSai"]                      = {_Q},
+        ["Rengar"]                      = {_E},
+        ["Riven"]                      = {_R},
+        ["Ryze"]                      = {_Q,_E},
+        ["Sejuani"]                      = {_R},
+        ["Sivir"]                      = {_Q},
+        ["Skarner"]                      = {_E},
+        ["Sona"]                      = {_Q,_R},
+        ["Shyvana"]                      = {_E},
+        ["Swain"]                      = {_Q,_E,_R},
+        ["Syndra"]                      = {_E,_R},
+        ["Taliyah"]                      = {_Q},
+        ["Talon"]                      = {_W,_R},
+        ["Teemo"]                      = {_Q},
+        ["Thresh"]                      = {_Q},
+        ["Tristana"]                      = {_R},
+        ["TwistedFate"]                      = {_Q},
+        ["Twitch"]                      = {_W,_R},
+        ["Urgot"]                      = {_Q,_R},
+        ["Varus"]                      = {_Q,_R},
+        ["Vayne"]                      = {_E},
+        ["Veigar"]                      = {_Q,_R},
+        ["Velkoz"]                      = {_Q,_W},
+        ["Viktor"]                      = {_E},
+        ["Vladimir"]                      = {_E},
+        ["Xayah"]                      = {_Q,_W,_R},
+        ["Xerath"]                      = {_E},
+        ["Xayah"]                      = {_Q},
+        ["Zac"]                      = {_Q},
+        ["Zed"]                      = {_Q},
+        ["Ziggs"]                      = {_Q,_W,_E},
+        ["Zoe"]                      = {_Q,_E},
+        ["Zyra"]                      = {_E}
+    } 
+    
+    self.WALL_SPELLS = { 
+        ["AatroxE"]                      = {Spellname ="AatroxE",Name= "Aatrox", Spellslot =_E},
+        ["AhriOrbofDeception"]                      = {Spellname ="AhriOrbofDeception",Name = "Ahri", Spellslot =_Q},
+        ["AhriSeduce"]                      = {Spellname ="AhriSeduce",Name = "Ahri", Spellslot =_E},
+        ["AkaliMota"]                      = {Spellname ="AkaliMota",Name = "Akali", Spellslot =_Q},
+        ["BandageToss"]                      = {Spellname ="BandageToss",Name ="Amumu",Spellslot =_Q},
+        ["FlashFrost"]                      = {Spellname ="FlashFrost",Name = "Anivia", Spellslot =_Q},
+        ["Anivia2"]                      = {Spellname ="Frostbite",Name = "Anivia", Spellslot =_E},
+        ["Disintegrate"]                      = {Spellname ="Disintegrate",Name = "Annie", Spellslot =_Q},
+        ["Volley"]                      = {Spellname ="Volley",Name ="Ashe", Spellslot =_W},
+        ["EnchantedCrystalArrow"]                      = {Spellname ="EnchantedCrystalArrow",Name ="Ashe", Spellslot =_R},
+        ["AurelionSolQ"]                      = {Spellname ="AurelionSolQ",Name ="AurelionSol", Spellslot =_Q},
+        ["BardQ"]                      = {Spellname ="BardQ",Name ="Bard", Spellslot =_Q},
+        ["RocketGrabMissile"]                      = {Spellname ="RocketGrabMissile",Name ="Blitzcrank",Spellslot =_Q},
+        ["BrandBlaze"]                      = {Spellname ="BrandBlaze",Name ="Brand", Spellslot =_Q},
+        ["BrandWildfire"]                      = {Spellname ="BrandWildfire",Name ="Brand", Spellslot =_R},
+        ["BraumQ"]                      = {Spellname ="BraumQ",Name ="Braum",Spellslot =_Q},
+        ["BraumRWapper"]                      = {Spellname ="BraumRWapper",Name ="Braum",Spellslot =_R},
+        ["CaitlynPiltoverPeacemaker"]                      = {Spellname ="CaitlynPiltoverPeacemaker",Name ="Caitlyn",Spellslot =_Q},
+        ["CaitlynEntrapment"]                      = {Spellname ="CaitlynEntrapment",Name ="Caitlyn",Spellslot =_E},
+        ["CaitlynAceintheHole"]                      = {Spellname ="CaitlynAceintheHole",Name ="Caitlyn",Spellslot =_R},
+        ["CassiopeiaMiasma"]                      = {Spellname ="CassiopeiaMiasma",Name ="Cassiopeia",Spellslot =_W},
+        ["CassiopeiaTwinFang"]                      = {Spellname ="CassiopeiaTwinFang",Name ="Cassiopeia",Spellslot =_E},
+        ["PhosphorusBomb"]                      = {Spellname ="PhosphorusBomb",Name ="Corki",Spellslot =_Q},
+        ["MissileBarrage"]                      = {Spellname ="MissileBarrage",Name ="Corki",Spellslot =_R},
+        ["DianaArc"]                      = {Spellname ="DianaArc",Name ="Diana",Spellslot =_Q},
+        ["InfectedCleaverMissileCast"]                      = {Spellname ="InfectedCleaverMissileCast",Name ="DrMundo",Spellslot =_Q},
+        ["dravenspinning"]                      = {Spellname ="dravenspinning",Name ="Draven",Spellslot =_Q},
+        ["DravenDoubleShot"]                      = {Spellname ="DravenDoubleShot",Name ="Draven",Spellslot =_E},
+        ["DravenRCast"]                      = {Spellname ="DravenRCast",Name ="Draven",Spellslot =_R},
+        ["EkkoQ"]                      = {Spellname ="EkkoQ",Name ="Ekko",Spellslot =_Q},
+        ["EliseHumanQ"]                      = {Spellname ="EliseHumanQ",Name ="Elise",Spellslot =_Q},
+        ["EliseHumanE"]                      = {Spellname ="EliseHumanE",Name ="Elise",Spellslot =_E},
+        ["EvelynnQ"]                      = {Spellname ="EvelynnQ",Name ="Evelynn",Spellslot =_Q},
+        ["EzrealMysticShot"]                      = {Spellname ="EzrealMysticShot",Name ="Ezreal",Spellslot =_Q,},
+        ["EzrealEssenceFlux"]                      = {Spellname ="EzrealEssenceFlux",Name ="Ezreal",Spellslot =_W},
+        ["EzrealArcaneShift"]                      = {Spellname ="EzrealArcaneShift",Name ="Ezreal",Spellslot =_R},
+        ["FiddlesticksDarkWind"]                      = {Spellname ="FiddlesticksDarkWind",Name ="FiddleSticks",Spellslot =_E},
+        ["FizzMarinerDoom"]                      = {Spellname ="FizzMarinerDoom",Name = "Fizz", Spellslot =_R},
+        ["GalioResoluteSmite"]                      = {Spellname ="GalioResoluteSmite",Name ="Galio",Spellslot =_Q},
+        ["Parley"]                      = {Spellname ="Parley",Name ="Gangplank",Spellslot =_Q},
+        ["GnarQ"]                      = {Spellname ="GnarQ",Name ="Gnar",Spellslot =_Q},
+        ["GragasQ"]                      = {Spellname ="GragasQ",Name ="Gragas",Spellslot =_Q},
+        ["GragasR"]                      = {Spellname ="GragasR",Name ="Gragas",Spellslot =_R},
+        ["GravesClusterShot"]                      = {Spellname ="GravesClusterShot",Name ="Graves",Spellslot =_Q},
+        ["GravesChargeShot"]                      = {Spellname ="GravesChargeShot",Name ="Graves",Spellslot =_R},
+        ["HeimerdingerW"]                      = {Spellname ="HeimerdingerW",Name ="Heimerdinger",Spellslot =_W},
+        ["IllaoiQ"]                      = {Spellname ="IllaoiQ",Name ="Illaoi",Spellslot =_Q},
+        ["IreliaTranscendentBlades"]                      = {Spellname ="IreliaTranscendentBlades",Name ="Irelia",Spellslot =_R},
+        ["IvernQ"]                      = {Spellname ="IvernQ",Name ="Ivern",Spellslot =_Q},
+        ["HowlingGale"]                      = {Spellname ="HowlingGale",Name ="Janna",Spellslot =_Q},
+        ["Zephyr"]                      = {Spellname ="Zephyr",Name ="Janna",Spellslot =_W},
+        ["JayceToTheSkies"]                      = {Spellname ="JayceToTheSkies" or "jayceshockblast",Name ="Jayce",Spellslot =_Q},
+        ["jayceshockblast"]                      = {Spellname ="JayceToTheSkies" or "jayceshockblast",Name ="Jayce",Spellslot =_Q},
+        ["JhinQ"]                      = {Spellname ="JhinQ",Name ="Jhin",Spellslot =_Q},
+        ["JhinRShot"]                      = {Spellname ="JhinRShot",Name ="Jhin",Spellslot =_R},
+        ["JinxW"]                      = {Spellname ="JinxW",Name ="Jinx",Spellslot =_W},
+        ["JinxR"]                      = {Spellname ="JinxR",Name ="Jinx",Spellslot =_R},
+        ["KaisaQ"]                      = {Spellname ="KaisaQ",Name ="Kaisa",Spellslot =_Q},
+        ["KaisaW"]                      = {Spellname ="KaisaW",Name ="Kaisa",Spellslot =_W},
+        ["KalistaMysticShot"]                      = {Spellname ="KalistaMysticShot",Name ="Kalista",Spellslot =_Q},
+        ["KarmaQ"]                      = {Spellname ="KarmaQ",Name ="Karma",Spellslot =_Q},
+        ["NullLance"]                      = {Spellname ="NullLance",Name ="Kassadin",Spellslot =_Q},
+        ["XayahQ"]                      = {Spellname ="XayahQ",Name ="Xayah",Spellslot =_Q},
+        ["XayahR"]                      = {Spellname ="XayahR",Name ="Xayah",Spellslot =_R},
+        ["KayleQ"]                      = {Spellname ="KayleQ",Name ="Kayle",Spellslot =_Q},
+        ["KennenShurikenHurlMissile1"]                      = {Spellname ="KennenShurikenHurlMissile1",Name ="Kennen",Spellslot =_Q},
+        ["KhazixW"]                      = {Spellname ="KhazixW",Name ="Khazix",Spellslot =_W},
+        ["KhazixWLong"]                      = {Spellname ="KhazixWLong",Name ="Khazix",Spellslot =_W},
+        ["KindredQ"]                      = {Spellname ="KindredQ",Name ="Kindred",Spellslot =_Q},
+        ["KledQ"]                      = {Spellname ="KledQ",Name ="Kled",Spellslot =_Q},
+        ["KledRiderQ"]                      = {Spellname ="KledRiderQ",Name ="Kled",Spellslot =_Q},
+        ["KogMawQ"]                      = {Spellname ="KogMawQ",Name ="KogMaw",Spellslot =_Q},
+        ["KogMawVoidOoze"]                      = {Spellname ="KogMawE",Name ="KogMaw",Spellslot =_E},
+        ["LeblancChaosOrb"]                      = {Spellname ="LeblancChaosOrb",Name ="Leblanc",Spellslot =_Q},
+        ["LeblancSoulShackle"]                      = {Spellname ="LeblancSoulShackle" or "LeblancSoulShackleM",Name ="Leblanc",Spellslot =_E},
+        ["LeblancSoulShackleM"]                      = {Spellname ="LeblancSoulShackle" or "LeblancSoulShackleM",Name ="Leblanc",Spellslot =_E},
+        ["BlindMonkQOne"]                      = {Spellname ="BlindMonkQOne",Name ="Leesin",Spellslot =_Q},
+        ["LeonaZenithBladeMissle"]                      = {Spellname ="LeonaZenithBladeMissle",Name ="Leona",Spellslot =_E},
+        ["LissandraE"]                      = {Spellname ="LissandraE",Name ="Lissandra",Spellslot =_E},
+        ["LucianW"]                      = {Spellname ="LucianW",Name ="Lucian",Spellslot =_W},
+        ["LucianRMis"]                      = {Spellname ="LucianR",Name ="Lucian",Spellslot =_R},
+        ["LuluQ"]                      = {Spellname ="LuluQ",Name ="Lulu",Spellslot =_Q},
+        ["LuxLightBinding"]                      = {Spellname ="LuxLightBinding",Name ="Lux",Spellslot =_Q},
+        ["LuxLightStrikeKugel"]                      = {Spellname ="LuxLightStrikeKugel",Name ="Lux",Spellslot =_E},
+        ["MalphiteQ"]                      = {Spellname ="MalphiteQ",Name ="Malphite",Spellslot =_Q},
+        ["MissFortuneBulletTime"]                      = {Spellname ="MissFortuneBulletTime",Name ="Missfortune",Spellslot =_R},
+        ["DarkBindingMissile"]                      = {Spellname ="DarkBindingMissile",Name ="Morgana",Spellslot =_Q},
+        ["NamiW"]                      = {Spellname ="NamiW",Name ="Nami",Spellslot =_W},
+        ["NamiR"]                      = {Spellname ="NamiR",Name ="Nami",Spellslot =_R},
+        ["NautilusAnchorDrag"]                      = {Spellname ="NautilusAnchorDrag",Name ="Nautilus",Spellslot =_Q},
+        ["JavelinToss"]                      = {Spellname ="JavelinToss",Name ="Nidalee",Spellslot =_Q},
+        ["NocturneDuskbringer"]                      = {Spellname ="NocturneDuskbringer",Name ="Nocturne",Spellslot =_Q},
+        ["OrnnR"]                      = {Spellname ="OrnnR",Name ="Ornn",Spellslot =_R},
+        ["PantheonQ"]                      = {Spellname ="PantheonQ",Name ="Pantheon",Spellslot =_Q},
+        ["QuinnQ"]                      = {Spellname ="QuinnQ",Name ="Quinn",Spellslot =_Q},
+        ["RakanQ"]                      = {Spellname ="RakanQ",Name ="Rakan",Spellslot =_Q},
+        ["reksaiqburrowed"]                      = {Spellname ="reksaiqburrowed",Name ="RekSai",Spellslot =_Q},
+        ["RengarE"]                      = {Spellname ="RengarE",Name ="Rengar",Spellslot =_E},
+        ["rivenizunablade"]                      = {Spellname ="rivenizunablade",Name ="Riven",Spellslot =_R},
+        ["Overload"]                      = {Spellname ="Overload",Name ="Ryze",Spellslot =_Q},
+        ["SpellFlux"]                      = {Spellname ="SpellFlux",Name ="Ryze",Spellslot =_E},
+        ["SejuaniGlacialPrisonStart"]                      = {Spellname ="SejuaniGlacialPrisonStart",Name ="Sejuani",Spellslot =_R},
+        ["SivirQ"]                      = {Spellname ="SivirQ",Name ="Sivir",Spellslot =_Q},
+        ["SkarnerFractureMissileSpell"]                      = {Spellname ="SkarnerFractureMissileSpell",Name ="Skarner",Spellslot =_E},
+        ["SonaQ"]                      = {Spellname ="SonaQ",Name ="Sona",Spellslot =_Q},
+        ["SonaCrescendo"]                      = {Spellname ="SonaCrescendo",Name ="Sona",Spellslot =_R},
+        ["ShyvanaFireball"]                      = {Spellname ="ShyvanaFireball",Name ="Shyvana",Spellslot =_E},
+        ["SwainDecrepify"]                      = {Spellname ="SwainDecrepify",Name ="Swain",Spellslot =_Q},
+        ["SwainTorment"]                      = {Spellname ="SwainTorment",Name ="Swain",Spellslot =_E},
+        ["SwainMetamorphism"]                      = {Spellname ="SwainMetamorphism",Name ="Swain",Spellslot =_R},
+        ["SyndraE"]                      = {Spellname ="SyndraE",Name ="Syndra",Spellslot =_E},
+        ["SyndraR"]                      = {Spellname ="SyndraR",Name ="Syndra",Spellslot =_R},
+        ["TaliyahQMis"]                      = {Spellname ="TaliyahQMis",Name ="Taliyah",Spellslot =_Q},
+        ["TalonRake"]                      = {Spellname ="TalonRake",Name ="Talon",Spellslot =_W},
+        ["TalonShadowAssault"]                      = {Spellname ="TalonShadowAssault",Name ="Talon",Spellslot =_R},
+        ["BlindingDart"]                      = {Spellname ="BlindingDart",Name ="Teemo",Spellslot =_Q},
+        ["Thresh"]                      = {Spellname ="ThreshQ",Name ="Thresh",Spellslot =_Q},
+        ["BusterShot"]                      = {Spellname ="BusterShot",Name ="Tristana",Spellslot =_R},
+        ["WildCards"]                      = {Spellname ="WildCards",Name ="TwistedFate",Spellslot =_Q},
+        ["TwitchVenomCask"]                      = {Spellname ="TwitchVenomCask",Name ="Twitch",Spellslot =_W},
+        ["TwitchSprayAndPrayAttack"]                      = {Spellname ="TwitchSprayAndPrayAttack",Name ="Twitch",Spellslot =_R},
+        ["UrgotHeatseekingLineMissile"]                      = {Spellname ="UrgotHeatseekingLineMissile",Name ="Urgot",Spellslot =_Q},
+        ["UrgotR"]                      = {Spellname ="UrgotR",Name ="Urgot",Spellslot =_R},
+        ["VarusQ"]                      = {Spellname ="VarusQ",Name ="Varus",Spellslot =_Q},
+        ["VarusR"]                      = {Spellname ="VarusR",Name ="Varus",Spellslot =_R},
+        ["VayneCondemm"]                      = {Spellname ="VayneCondemm",Name ="Vayne",Spellslot =_E},
+        ["VeigarBalefulStrike"]                      = {Spellname ="VeigarBalefulStrike",Name ="Veigar",Spellslot =_Q},
+        ["VeigarPrimordialBurst"]                      = {Spellname ="VeigarPrimordialBurst",Name ="Veigar",Spellslot =_R},
+        ["VelkozQ"]                      = {Spellname ="VelkozQ",Name ="Velkoz",Spellslot =_Q},
+        ["VelkozW"]                      = {Spellname ="VelkozW",Name ="Velkoz",Spellslot =_W},
+        ["ViktorDeathRay"]                      = {Spellname ="ViktorDeathRay",Name ="Viktor",Spellslot =_E},
+        ["VladimirE"]                      = {Spellname ="VladimirE",Name ="Vladimir",Spellslot =_E},
+        ["XayahQ"]                      = {Spellname ="XayahQ",Name ="Xayah",Spellslot =_Q},
+        ["XayahW"]                      = {Spellname ="XayahW",Name ="Xayah",Spellslot =_W},
+        ["XayahR"]                      = {Spellname ="XayahR",Name ="Xayah",Spellslot =_R},
+        ["XerathMageSpear"]                      = {Spellname ="XerathMageSpear",Name ="Xerath",Spellslot =_E},
+        ["XayahQ3W"]                      = {Spellname ="XayahQ3W",Name ="Xayah",Spellslot =_Q},
+        ["ZacQ"]                      = {Spellname ="ZacQ",Name ="Zac",Spellslot =_Q},
+        ["ZedShuriken"]                      = {Spellname ="ZedShuriken",Name ="Zed",Spellslot =_Q},
+        ["ZiggsQ"]                      = {Spellname ="ZiggsQ",Name ="Ziggs",Spellslot =_Q},
+        ["ZiggsW"]                      = {Spellname ="ZiggsW",Name ="Ziggs",Spellslot =_W},
+        ["ZiggsE"]                      = {Spellname ="ZiggsE",Name ="Ziggs",Spellslot =_E},
+        ["ZoeQ"]                      = {Spellname ="ZoeQ",Name ="Zoe",Spellslot =_Q},
+        ["ZoeE"]                      = {Spellname ="ZoeE",Name ="Zoe",Spellslot =_E},
+        ["ZyraGraspingRoots"]                      = {Spellname ="ZyraGraspingRoots",Name ="Zyra",Spellslot =_E}
+    } 
 
-    self.Q:SetSkillShot(0.7, 2000, 85, true)
-    self.W:SetTargetted()
-    self.E:SetTargetted()
-    self.R:SetSkillShot(0.7, 1500, 140, true)
+    myHero = GetMyHero()
+
+    --Spell
+    self.Q = Spell({Slot = 0, SpellType = Enum.SpellType.SkillShot, Range = 1075, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
+    self.W = Spell({Slot = 1, SpellType = Enum.SpellType.Active, Range = GetTrueAttackRange()})
+    self.E = Spell({Slot = 2, SpellType = Enum.SpellType.Active, Range = math.huge})
+    self.R = Spell({Slot = 3, SpellType = Enum.SpellType.SkillShot, Range = 1100, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
 
     self.Pull = { }
     self.CountPull = 0
+    self.WithPull = 85 
+    self.WithBand = 1.5
 
     self:MenuXayah()
 
-    Callback.Add("Tick", function(...) self:OnTick(...) end)
-    Callback.Add("CreateObject", function(...) self:OnCreateObject(...) end)
-    Callback.Add("DeleteObject", function(...) self:OnDeleteObject(...) end)
-    Callback.Add("Draw", function(...) self:OnDraw(...) end)
-    Callback.Add("DrawMenu", function(...) self:OnDrawMenu(...) end)
+    AddEvent(Enum.Event.OnTick, function(...) self:OnTick(...) end)
+    AddEvent(Enum.Event.OnProcessSpell, function(...) self:OnProcessSpell(...) end)
+    --AddEvent(Enum.Event.OnUpdateBuff, function(...) self:OnUpdateBuff(...) end)
+    AddEvent(Enum.Event.OnDrawMenu, function(...) self:OnDrawMenu(...) end)
+    AddEvent(Enum.Event.OnDraw, function(...) self:OnDraw(...) end)
+    AddEvent(Enum.Event.OnCreateObject, function(...) self:OnCreateObject(...) end)
+    AddEvent(Enum.Event.OnDeleteObject, function(...) self:OnDeleteObject(...) end)
+   --AddEvent(Enum.Event.OnAfterAttack, function(...) self:OnAfterAttack(...) end)
+    --
+    Orbwalker:RegisterPostAttackCallback(function(...) self:OnPostAttack(...) end)
+end 
+
+function Xayah:OnTick()
+    if (IsDead(myHero.Addr) or myHero.IsRecall or IsTyping() or IsDodging()) or not IsRiotOnTop() then return end
+
+    self:AutoE()
+    self:Killed()
+
+    if GetOrbMode() == 1 then
+        local TargetCombo = GetTargetSelector(2000, 1)
+        if TargetCombo ~= 0 then
+            target = GetAIHero(TargetCombo)
+            self:ComboXayah(target)
+            self:CastW(target)
+        end 
+    end
+end 
+
+function Xayah:OnPostAttack(args)  
+
+end 
+
+function Xayah:ComboXayah(target)
+    if target and target ~= 0 then 
+        if IsValidTarget(target, self.Q.Range) and self.Q:IsReady() then
+            local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
+            if HitChance >= 5 then
+                CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
+            end 
+        end 
+        if self.E:IsReady() then 
+            local featherHitCount = 0
+            for i, feather in pairs(self.Pull) do
+                -- local featsCou = 0
+                if self:IsOnEPath(target, feather) then
+                    featherHitCount = featherHitCount + 1
+                    end 
+                end 
+                if featherHitCount > self.PE then
+                CastSpellTarget(myHero.Addr, _E)
+            end
+        end 
+    end 
 end 
 
 function Xayah:MenuBool(stringKey, bool)
@@ -65,12 +364,12 @@ function Xayah:MenuXayah()
     self.CW = self:MenuBool("Combo W", true)
     self.CE = self:MenuBool("Combo E", true)
     self.CR = self:MenuBool("Combo R", true)
-    self.PE = self:MenuSliderInt("Min number of feathers to hit", 3)
+    self.PE = self:MenuSliderInt("Min number of feathers to hit", 2)
     self.LOR = self:MenuSliderInt("Min number of feathers to hit", 3)
     self.ML = self:MenuSliderInt("Mana Clear", 40)
     self.BuffPassive = self:MenuBool("Active Buff (Rakan)", true)
     self.Rmode = self:MenuComboBox("Mode [R] Spell", 2)
-    --self.EvadeR = self:MenuBool("Evade [R]", true)
+    self.EvadeR = self:MenuBool("Evade [R]", true)
 
     self.EvadeLife = self:MenuSliderInt("Life [Evade]", 100)
 
@@ -88,7 +387,7 @@ function Xayah:MenuXayah()
     self.KR = self:MenuBool("KillSteal > R", true)
     self.KE = self:MenuBool("KillSteal > E", true)
 
-    self.AutoEStun = self:MenuBool("Auto E (Stun)", false)
+    self.AutoEStun = self:MenuBool("Auto E (Stun)", true)
 
     self.LW = self:MenuBool("Lane W", true)
     -- Misc [[Xayah]]
@@ -115,29 +414,20 @@ function Xayah:OnDrawMenu()
     if not Menu_Begin(self.menu) then return end
 		if (Menu_Begin("Combo")) then
             self.CQ = Menu_Bool("Combo Q", self.CQ, self.menu)
+            Menu_Separator()
+            Menu_Text("--Settings [W]--")
             self.CW = Menu_Bool("Combo W", self.CW, self.menu)
             self.BuffPassive = Menu_Bool("Active Buff (Rakan)", self.BuffPassive, self.menu)
+            Menu_Separator()
+            Menu_Text("--Settings [E]--")
             self.CE = Menu_Bool("Combo E", self.CE, self.menu)
-            self.AutoEStun = Menu_Bool("Auto E (Stun)", self.AutoEStun, self.menu)
-            self.CR = Menu_Bool("Combo R", self.CR, self.menu)
-            --self.EvadeR = Menu_Bool("Evade [R]", self.EvadeR, self.menu)
             self.PE = Menu_SliderInt("Min number of feathers to hit", self.PE, 0, 10, self.menu)
-            self.Rmode = Menu_ComboBox("Mode [R] Spell", self.Rmode, "Stun [R]\0My Hero Position\0Can Kill\0", self.menu)
-            if self.Rmode == 2 then
-                self.EH = Menu_SliderInt("Enemy Hit", self.EH, 0, 5, self.menu)
-                self.MI = Menu_SliderInt("My living", self.MI, 0, 100, self.menu)
-                self.LE = Menu_SliderInt("Living Enemy", self.LE, 0, 100, self.menu)
-            end
-            if self.Rmode == 1 then
-                self.EH = Menu_SliderInt("Enemy Hit", self.EH, 0, 5, self.menu)
-                self.LE = Menu_SliderInt("Living Enemy", self.LE, 0, 100, self.menu)
-            end
-            if self.Rmode == 0 then
-                self.EH = Menu_SliderInt("Enemy Hit", self.EH, 0, 5, self.menu)
-                self.LE = Menu_SliderInt("Living Enemy", self.LE, 0, 100, self.menu)
-                self.LOR = Menu_SliderInt("Feathers to hit", self.PE, 0, 5, self.menu)
-            end
-			Menu_End()
+            self.AutoEStun = Menu_Bool("Auto E (Stun)", self.AutoEStun, self.menu)
+            Menu_Separator()
+            Menu_Text("--Settings [E]--")
+            self.CR = Menu_Bool("Combo R", self.CR, self.menu)
+            self.EvadeR = Menu_Bool("Evade [R]", self.EvadeR, self.menu)
+            Menu_End()
         end
         if (Menu_Begin("Draws")) then
             self.DQWER = Menu_Bool("Draw Off", self.DQWER, self.menu)
@@ -158,15 +448,44 @@ function Xayah:OnDrawMenu()
         end
         if (Menu_Begin("Keys")) then
             self.Key_Combo = Menu_KeyBinding("Combo", self.Key_Combo, self.menu)
-            self.LaneClear = Menu_KeyBinding("Lane Clear", self.LaneClear, self.menu)
+            --self.LaneClear = Menu_KeyBinding("Lane Clear", self.LaneClear, self.menu)
 			Menu_End()
         end
 	Menu_End()
 end
 
+function Xayah:Killed()
+    for i, enemy in pairs(self:GetEnemies(math.huge)) do
+        local target = GetAIHero(enemy)
+        if enemy ~= 0 then
+            if self.E:IsReady() then 
+                local featherHitCount = 0
+                for i, feather in pairs(self.Pull) do
+                    if self:IsOnEPath(target, feather) and self:GetEDamage(target) > target.HP then
+                        CastSpellTarget(myHero.Addr, _E)
+                    end 
+                end 
+            end 
+        end 
+    end 
+end 
+
+function Xayah:OnProcessSpell(unit, spell)
+    if self.R:IsReady() and unit and spell and unit.IsEnemy and IsChampion(unit.Addr) then
+       -- spell.startpos = {x = spell.SourcePos_x, y = spell.SourcePos_y, z = spell.SourcePos_z }
+        spell.endPos = {x = spell.DestPos_x, y = spell.DestPos_y, z = spell.DestPos_z}
+        local pointSegment, pointLine, isOnSegment = VectorPointProjectionOnLineSegment(Vector(unit), Vector(spell.endPos), Vector(myHero))
+           if isOnSegment and GetDistance(pointSegment) < spell.Width + (GetOverrideCollisionRadius(myHero.Addr) / 2) then
+              if self.WALL_SPELLS[spell.Name] ~= nil then
+                CastSpellToPos(unit.x, unit.z, _R)  
+            end 
+        end 
+    end          
+end 
+
 function Xayah:OnCreateObject(obj)
     if obj and obj.IsValid and obj.NetworkId and obj.NetworkId ~= 0 then
-        if string.find(obj.Name, "Feather") then
+        if string.find(obj.Name, "Passive_Dagger_indicator8s") then
             self.Pull[obj.NetworkId] = obj
             self.CountPull = self.CountPull + 1
         end 
@@ -175,7 +494,7 @@ end
 
 function Xayah:OnDeleteObject(obj)
     if obj and obj.IsValid and obj.NetworkId and obj.NetworkId ~= 0 then
-        if string.find(obj.Name, "Feather") then
+        if string.find(obj.Name, "Passive_Dagger_indicator8s") then
             self.Pull[obj.NetworkId] = nil
             self.CountPull = self.CountPull - 1
         end 
@@ -187,7 +506,7 @@ function Xayah:OnDraw()
 
     if self.Q:IsReady() and self.DQ then 
         local posQ = Vector(myHero)
-        DrawCircleGame(posQ.x , posQ.y, posQ.z, self.Q.range, Lua_ARGB(255,255,255,255))
+        DrawCircleGame(posQ.x , posQ.y, posQ.z, self.Q.Range, Lua_ARGB(255,255,255,255))
     end
     if self.DrawFeather then
         for i, teste in pairs(self.Pull) do
@@ -199,18 +518,30 @@ function Xayah:OnDraw()
     end 
 end 
 
+function Xayah:CastW(target)
+    if target ~= 0 then
+        if IsValidTarget(target, GetTrueAttackRange()) then
+            CastSpellTarget(myHero.Addr, _W)
+        end 
+    end 
+end 
+
 function Xayah:IsOnEPath(eney, feather)
-    Target = GetAIHero(eney)
-    local LineEnd = Vector(myHero) + (Vector(feather) - Vector(myHero)):Normalized() * GetDistance(feather)
-    local pointSegment, pointLine, isOnSegment = VectorPointProjectionOnLineSegment(Vector(myHero), LineEnd, Vector(Target))
-    if isOnSegment and GetDistance(Target, pointSegment) <= 85*1.5 then
+    local myhepos = Vector(myHero.x, myHero.y, myHero.z)
+    local targetpos = Vector(eney.x, eney.y, eney.z)
+    local ObjPos = Vector(feather.x, feather.y, feather.z)
+    local DObj = myhepos:DistanceTo(ObjPos)
+    local endPos = myhepos:Extended(ObjPos, DObj)
+    local pointSegment, pointLine, isOnSegment = VectorPointProjectionOnLineSegment(myhepos, endPos, targetpos)
+    local pointSegmentVector = Vector(pointSegment.x, targetpos.y, pointSegment.z)
+    if isOnSegment and targetpos:DistanceTo(pointSegmentVector) <= self.WithPull * self.WithBand then  --__PrintTextGame(tostring(width))
         return true
-    end
+    end   
     return false
 end
 
 function Xayah:GetQLinePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.Q.delay, self.Q.width, self.Q.range, self.Q.speed, myHero.x, myHero.z, false, true, 1, 0, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, 0.007, 75, self.Q.Range, 1000, myHero.x, myHero.z, false, false, 1, 0, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
@@ -221,7 +552,7 @@ function Xayah:GetQLinePreCore(target)
 end
 
 function Xayah:GetRConePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 2, self.R.delay, 60, self.R.range, self.R.speed, myHero.x, myHero.z, true, true, 1, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 2, self.R.delay, 60, self.R.Range, self.R.speed, myHero.x, myHero.z, true, true, 1, 5, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
@@ -232,18 +563,19 @@ function Xayah:GetRConePreCore(target)
 	return nil , 0 , nil, 0
 end
 
-function Xayah:CastE()
-    for i,hero in pairs(GetEnemyHeroes()) do
+function Xayah:AutoE()
+    for i,hero in pairs(self:GetEnemies(math.huge)) do
         if hero ~= 0 then
             target = GetAIHero(hero)
-            if GetKeyPress(self.Key_Combo) > 0 and self.E:IsReady() then
+            if self.AutoEStun and self.E:IsReady() then
                 local featherHitCount = 0
                 for i, feather in pairs(self.Pull) do
+                   -- local featsCou = 0
                     if self:IsOnEPath(target, feather) then
                         featherHitCount = featherHitCount + 1
-                    end
-                end
-                if featherHitCount >= self.PE then
+                    end 
+                end 
+                if featherHitCount > self.PE then
                     CastSpellTarget(myHero.Addr, _E)
                 end
             end 
@@ -251,167 +583,105 @@ function Xayah:CastE()
     end 
 end 
 
-function Xayah:KillStealXayah()
-    for i,hero in pairs(GetEnemyHeroes()) do
-        if hero ~= 0 then
-            target = GetAIHero(hero)
-            if IsValidTarget(target, self.Q.range) and GetDamage("Q", target) > target.HP then
-                local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
-                if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
-                end 
-                if IsValidTarget(target, self.E.range) and GetDamage("E", target) > target.HP then
-                    CastSpellTarget(myHero.Addr, _E)
-                end 
-            end
-        end 
-    end 
-end 
+function Xayah:GetEDamage(target)
+    if target ~= 0 and CanCast(_E) then
+		local Damage = 0
+		local DamageAP = {55, 65, 75, 85, 95}
 
-
-function Xayah:AntiGapCloser()
-    local target = CountEnemyChampAroundObject(myHero.Addr, 1000)	
-        if IsCasting(myHero.Addr) or CanCast(R) == false or Setting_IsComboUseR() == false or target == nil or target == 0 then return end	
-        local t = GetEnemyHeroes()
-        for k,v in pairs(t) do  
-            local enemy = GetAIHero(v)          
-            if enemy.IsValid and enemy.Distance <= 900 and enemy.IsVisible then
-                if enemy.IsDash then
-                    local myHeroPos = Vector(GetPos(myHero.Addr)) or Vector(0,0,0)
-                    --__PrintTextGame("myHeroPos " .. tostring(myHeroPos))
-                    local dashFrom = Vector(GetPos(v))	or Vector(0,0,0)
-                    --__PrintTextGame("dashFrom " .. tostring(dashFrom))
-                    local dashTo =  Vector(GetDestPos(v)) or Vector(0,0,0)
-                    --__PrintTextGame("dashTo " .. tostring(dashTo))
-                    local angle = math.atan( 50/((myHeroPos - dashFrom):Len()) )					
-                    if (myHeroPos - dashFrom):Angle(dashTo - dashFrom) <= angle then
-                        CastSpellToPos(v.x, v.z, R)
-                    return         			
-                end						
-            end
+        if self.E:IsReady() and self.CountPull > 0 then
+			Damage = (DamageAP[myHero.LevelSpell(_E)] + 0.60 * myHero.BonusDmg + 0.50 * myHero.CritChance)
         end
+		return myHero.CalcDamage(target.Addr, Damage)
+	end
+	return 0
+end
+
+function Xayah:ComboDamage(target) -- Ty Nechrito <3 THAKS <3 
+    local aa = myHero.TotalDmg
+    local dmg = aa
+
+    if self:GetIgniteIndex() > -1 and CanCast(self:GetIgniteIndex()) then
+        dmg = dmg + 50 + 20 * GetLevel(myHero.Addr) / 5 * 3
     end
-end 
-
-function Xayah:CastQ()
-    for i,hero in pairs(GetEnemyHeroes()) do
-        if hero ~= 0 then
-            target = GetAIHero(hero)
-            if GetKeyPress(self.Key_Combo) > 0 and IsValidTarget(target, self.Q.range) then
-                local CastPosition, HitChance, Position = self:GetQLinePreCore(target)
-                if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
-                end 
-            end 
-        end 
-    end 
-end 
-
-function Xayah:LogicR2()
-    for i ,enemys in pairs(GetEnemyHeroes()) do
-        local enemys = GetTargetSelector(self.R.Range)
-        target = GetAIHero(enemys)
-        if target ~= 0 then
-            if self.Rmode == 2 then
-            if self.CR and self.R:IsReady() and IsValidTarget(target, self.R.Range) and CountEnemyChampAroundObject(target, self.R.range) <= self.EH and GetPercentHP(myHero) < self.MI and GetPercentHP(target) < self.LE then
-                local CastPosition, HitChance, Position = self:GetRConePreCore(target)
-                if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _R)
-                end 
-                end   
-            end 
-        end 
-    end 
-end 
-
-function Xayah:LogicR1()
-    for i ,enemys in pairs(GetEnemyHeroes()) do
-        local enemys = GetTargetSelector(self.R.Range)
-        target = GetAIHero(enemys)
-        if target ~= 0 then
-            if self.Rmode == 1 then
-            if self.CR and self.R:IsReady() and IsValidTarget(target, self.R.Range) and CountEnemyChampAroundObject(target, self.R.range) <= self.EH and GetPercentHP(target) < self.LE then
-                local CastPosition, HitChance, Position = self:GetRConePreCore(target)
-                if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _R)
-                end  
-                end   
-            end 
-        end 
-    end 
-end 
-
-function Xayah:LogicR0()
-    for i ,enemys in pairs(GetEnemyHeroes()) do
-        local enemys = GetTargetSelector(self.R.Range)
-        target = GetAIHero(enemys)
-        if target ~= 0 then
-            if self.Rmode == 0 then
-            if self.CR and self.R:IsReady() and IsValidTarget(target, self.R.Range) and CountEnemyChampAroundObject(target, self.R.range) <= self.EH and GetPercentHP(target) < self.LE then
-                local CastPosition, HitChance, Position = self:GetRConePreCore(target)
-                if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _R)
-                end 
-                end   
-            end 
-        end 
-    end 
-end 
-
-function Xayah:CastW()
-    for i,hero in pairs(GetEnemyHeroes()) do
-        if hero ~= 0 then
-            target = GetAIHero(hero)
-            if GetKeyPress(self.Key_Combo) > 0 and IsValidTarget(target, self.W.range) then
-                if self.CountPull > 1 then
-                    CastSpellTarget(myHero.Addr, _W)
-                end 
-            end 
-        end 
-    end 
-end 
-
-function Xayah:AutoEis()
-    for i,hero in pairs(GetEnemyHeroes()) do
-        if hero ~= 0 then
-            target = GetAIHero(hero)
-            if self.E:IsReady() then
-                local featherHitCount = 0
-                for i, feather in pairs(self.Pull) do
-                    if self:IsOnEPath(target, feather) then
-                        featherHitCount = featherHitCount + 1
-                    end
-                end
-                if featherHitCount >= self.PE then
-                    self.E:Cast()
-                end
-            end
-        end 
-    end 
-end 
-
-function Xayah:OnTick()
-    if (IsDead(myHero.Addr) or myHero.IsRecall or IsTyping() or IsDodging()) or not IsRiotOnTop() then return end
-
-    self:AntiGapCloser()
-    self:KillStealXayah()
-
-    if self.AutoEStun then
-        self:AutoEis()
-    end 
-
-    if self.CE then
-        self:CastE()
+  
+    if self.R:IsReady() then
+        dmg = dmg + self:GetRDamage(target) 
     end
-    if self.CW then
-        self:CastW()
+  
+    if self.E:IsReady() then
+        dmg = dmg + self.E:GetDamage(target)
+    end
+
+    if self.Q:IsReady() then
+        dmg = dmg + self:GetQ3Damage(target)
+    end
+
+    if self.Q:IsReady() then
+        dmg = dmg + self:GetQ1Damage(target)
+    end
+
+    dmg = self:RealDamage(target, dmg)
+    return dmg
+end
+
+function Xayah:OfcEDamage(target) -- Ty Nechrito <3 THAKS <3 
+    local aa = myHero.TotalDmg
+    local dmg = aa
+  
+    if self.R:IsReady() then
+        dmg = dmg + self:GetEDamage(target) 
+    end
+
+    dmg = self:RealDamage(target, dmg)
+    return dmg
+end
+
+
+function Xayah:RealDamage(target, damage)
+    if target.HasBuff("KindredRNoDeathBuff") or target.HasBuff("JudicatorIntervention") or target.HasBuff("FioraW") or target.HasBuff("ShroudofDarkness")  or target.HasBuff("SivirShield") then
+        return 0  
+    end
+    local pbuff = GetBuff(GetBuffByName(target, "UndyingRage"))
+    if target.HasBuff("UndyingRage") and pbuff.EndT > GetTimeGame() + 0.3  then
+        return 0
+    end
+    local pbuff2 = GetBuff(GetBuffByName(target, "ChronoShift"))
+    if target.HasBuff("ChronoShift") and pbuff2.EndT > GetTimeGame() + 0.3 then
+        return 0
+    end
+    if myHero.HasBuff("SummonerExhaust") then
+        damage = damage * 0.6;
+    end
+    if target.HasBuff("BlitzcrankManaBarrierCD") and target.HasBuff("ManaBarrier") then
+        damage = damage - target.MP / 2
+    end
+    if target.HasBuff("GarenW") then
+        damage = damage * 0.6;
+    end
+    return damage
+end
+
+---------------------------------------------------
+--Orthes Class
+---------------------------------------------------
+
+
+function Xayah:GetHeroes()
+	SearchAllChamp()
+	local t = pObjChamp
+	return t
+end
+
+function Xayah:GetEnemies(range)
+    local t = {}
+    local h = self:GetHeroes()
+    for k, v in pairs(h) do
+        if v ~= 0 then
+            local hero = GetAIHero(v)
+            if hero.IsEnemy and hero.IsValid and hero.Type == 0 and (not range or range > GetDistance(hero)) then
+                table.insert(t, hero)
+            end 
+        end 
     end 
-    if self.CQ then
-        self:CastQ()
-    end 
-    if self.CR then
-        self:LogicR2()
-        self:LogicR1()
-        self:LogicR0()
-    end 
+    return t
 end 
