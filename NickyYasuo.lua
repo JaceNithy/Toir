@@ -286,6 +286,7 @@ function Yasuo:_Mid()
     AddEvent(Enum.Event.OnTick, function(...) self:OnTick(...) end)
     AddEvent(Enum.Event.OnProcessSpell, function(...) self:OnProcessSpell(...) end)
     AddEvent(Enum.Event.OnDrawMenu, function(...) self:OnDrawMenu(...) end)
+    AddEvent(Enum.Event.OnDraw, function(...) self:OnDraw(...) end)
    -- AddEvent(Enum.Event.OnUpdate, function(...) self:OnUpdate(...) end)
 
    self:MenuProject()
@@ -300,12 +301,11 @@ function Yasuo:OnTick()
     self:AutoQ()
 
     if GetOrbMode() == 1 then
-        for k, v in pairs(self:GetEnemies(1100)) do
-            if v ~= 0 then
-                local target = GetAIHero(v)
-                self:ComboY(target)
-                self:CastR(target)
-            end 
+        local TargetCombo= GetTargetSelector(2000, 1)
+        if TargetCombo ~= nil then
+            target = GetAIHero(TargetCombo)
+            self:ComboY(target)
+            self:CastR(target)
         end 
     end
 
@@ -315,6 +315,7 @@ function Yasuo:OnTick()
 
     if GetOrbMode() == 2 or GetOrbMode() == 4  then
         self:CastEY()
+        self:CASTEw()
     end 
     
     if GetBuffByName(myHero.Addr, "YasuoQW") > 0 then
@@ -333,12 +334,80 @@ function Yasuo:OnTick()
     else
         self.Q.YQ3 = false
     end
+
+    if self.AutoLevel then
+        if myHero.Level == 1 then
+            LevelUpSpell(_Q)
+        end 
+        if myHero.Level == 2 then
+            LevelUpSpell(_E)
+        end 
+        if myHero.Level == 3 then
+            LevelUpSpell(_W)
+        end 
+        if myHero.Level == 4 then
+            LevelUpSpell(_E)
+        end 
+        if myHero.Level == 5 then
+            LevelUpSpell(_Q)
+        end 
+        if myHero.Level == 6 then
+            LevelUpSpell(_R)
+        end 
+        if myHero.Level == 7 then
+            LevelUpSpell(_E)
+        end 
+        if myHero.Level == 8 then
+            LevelUpSpell(_Q)
+        end 
+        if myHero.Level == 9 then
+            LevelUpSpell(_E)
+        end 
+        if myHero.Level == 10 then
+            LevelUpSpell(_Q)
+        end 
+        if myHero.Level == 11 then
+            LevelUpSpell(_R)
+        end 
+        if myHero.Level == 12 then
+            LevelUpSpell(_Q)
+        end 
+        if myHero.Level == 13 then
+            LevelUpSpell(_Q)
+        end 
+        if myHero.Level == 14 then
+            LevelUpSpell(_W)
+        end 
+        if myHero.Level == 15 then
+            LevelUpSpell(_W)
+        end 
+        if myHero.Level == 16 then
+            LevelUpSpell(_R)
+        end 
+        if myHero.Level == 17 then
+            LevelUpSpell(_W)
+        end 
+        if myHero.Level == 18 then
+            LevelUpSpell(_W)
+        end    
+    end
+    for k, v in pairs(self:GetEnemies(1100)) do
+        if v ~= 0 then
+            local target = GetAIHero(v)
+            if IsValidTarget(target, 1000) and self.Q.YQ3 and not myHero.IsDash and self:GetQ3Damage(target) > target.HP then
+                local CastPosition, HitChance, Position = self:GetQ3LinePreCore(target)
+                if HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _Q) 
+                end 
+            end 
+        end 
+    end 
 end 
 
 function Yasuo:ComboY(target)
     if target and target ~= 0 then
         if self.E:IsReady() then
-            if IsValidTarget(target, self.E.Range) and not self:IsMarked(target) and not self:IsUnderTurretEnemy(self:DashEndPos(target)) then
+            if IsValidTarget(target, self.E.Range) and not self:IsMarked(target) and not self:IsUnderTurretEnemy(self:DashEndPos(target)) and GetDistance(GetAIHero(target), self:DashEndPos(GetAIHero(target))) <= GetDistance(GetAIHero(target)) then
                 CastSpellTarget(target.Addr, _E)
             end 
             if IsValidTarget(target, 1500) and GetDistance(target) > 700 then
@@ -360,7 +429,7 @@ function Yasuo:ComboY(target)
                 CastSpellToPos(target.x, target.z, _Q)
             end
         end
-        if self.Q:IsReady() and IsValidTarget(target, 900) and self.Q.YQ3 then
+        if self.Q:IsReady() and IsValidTarget(target, 900) and self.Q.YQ3 and not myHero.IsDash then
             if not myHero.IsDash then
                 local CastPosition, HitChance, Position = self:GetQ3LinePreCore(target)
                     if HitChance >= 5 then
@@ -379,7 +448,7 @@ function Yasuo:AutoQ()
     for k, v in pairs(self:GetEnemies(1100)) do
         if v ~= 0 then
             local target = GetAIHero(v)
-            if IsValidTarget(target, 1000) and self.Q.YQ3 then
+            if IsValidTarget(target, 1000) and self.Q.YQ3 and not myHero.IsDash then
                 local CastPosition, HitChance, Position = self:GetQ3LinePreCore(target)
                 if HitChance >= 5 then
                     CastSpellToPos(CastPosition.x, CastPosition.z, _Q)
@@ -392,14 +461,30 @@ end
 function Yasuo:CastEY()
     for i, minion in pairs(self:EnemyMinionsTbl(500)) do
         if minion ~= 0 then
-            if self.E:IsReady() and GetDistance(Vector(minion)) <= 450 and  self:GetEDamage(minion) > minion.HP and not self:IsUnderTurretEnemy(minion) then
-                CastSpellTarget(minion.Addr, _E)
-            end
-            if self.Q:IsReady() and GetDistance(Vector(minion)) <= 450 and  self:GetQ1Damage(minion) > minion.HP then
+            if self.Q:IsReady() and GetDistance(Vector(minion)) <= 450 then
                 CastSpellToPos(minion.x, minion.z, _Q)
             end 
+            if myHero.IsDash and GetDistance(minion) <= 250 and self.Q.YQ3 then
+                CastSpellToPos(minion.x, minion.z, _Q)
+            end
+            if myHero.IsDash and GetDistance(minion) <= 250 then
+                CastSpellToPos(minion.x, minion.z, _Q)
+            end          
         end 
     end 
+end 
+
+function Yasuo:CASTEw()
+    for i, minion in pairs(self:EnemyMinionsTbl(500)) do
+        if minion ~= 0 then
+    if #self:GetEnemies(1000) == 0 then
+        if self.E:IsReady() and GetDistance(Vector(minion)) <= 450 and  self:GetEDamage(minion) > minion.HP and not self:IsUnderTurretEnemy(minion) then
+            CastSpellTarget(minion.Addr, _E)
+        end
+    end   
+end 
+end 
+
 end 
 
 function Yasuo:CastR(target)
@@ -411,7 +496,9 @@ function Yasuo:CastR(target)
         if self.R:IsReady() and IsValidTarget(target, self.R.Range) and #self.KnockedEnemies >= self.UtY and not self:IsUnderTurretEnemy(target) then
             CastSpellTarget(target.Addr, _R)
         else 
-            if self:ComboDamage(target) > GetRealHP(target, 1) and self.R:IsReady() and IsValidTarget(target, self.R.Range) and self:LogiR(target) then
+            if CountAllyChampAroundObject(myHero.Addr, 1000) > 0 and self.R:IsReady() and IsValidTarget(target, self.R.Range) and self:LogiR(target) then
+                CastSpellTarget(target.Addr, _R)
+            elseif self:ComboDamage(target) > GetRealHP(target, 1) and self.R:IsReady() and IsValidTarget(target, self.R.Range) and self:LogiR(target) then
                 CastSpellTarget(target.Addr, _R)
             end 
         end 
@@ -425,6 +512,14 @@ function Yasuo:LogiR(target)
     return false
 end 
 
+function Yasuo:OnDraw()
+    local TargetCombo= GetTargetSelector(2000, 1)
+        if TargetCombo ~= nil then
+        target = GetAIHero(TargetCombo)
+        local pos = Vector(target)
+        DrawCircleGame(pos.x, pos.y, pos.z, 150, Lua_ARGB(255, 0, 204, 255))
+    end 
+end 
 
 --[[function Yasuo:OnUpdate()
     if GetSpellNameByIndex(myHero.Addr, _Q) == "YasuoQW" then
