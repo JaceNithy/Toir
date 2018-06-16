@@ -1,434 +1,420 @@
+--Do not copy anything without permission, if you copy the file you will respond for plagiarism
+--@ Copyright: RMAN (Credts Total) att > JaceNicky
 
-    IncludeFile("Lib\\TOIR_SDK.lua")
+IncludeFile("Lib\\SDK.lua")
 
-    --Thank you RMAN for letting us upgrade
+class "Vayne"
 
-    local myHero = function() return GetMyChamp() end
-    if GetChampName(myHero()) ~= "Vayne" then return end
-    
+
+local ScriptXan = 2.4
+local NameCreat = "Jace Nicky"
+
+function OnLoad()
+    if myHero.CharName ~= "Vayne" then return end
+    __PrintTextGame("<b><font color=\"#00FF00\">Champion:</font></b> " ..myHero.CharName.. "<b><font color=\"#FF0000\"> Good Game!</font></b>")
+    __PrintTextGame("<b><font color=\"#00FF00\">Vayne, v</font></b> " ..ScriptXan)
+    __PrintTextGame("<b><font color=\"#00FF00\">By: </font></b> " ..NameCreat)
+    Vayne:_ADC()
+end
+
+function Vayne:_ADC()
     SetLuaCombo(true)
+    SetLuaHarass(true) 
 
-    __PrintTextGame("Vayne, Good Game!")
-    __PrintTextGame("by, Jace Nicky")
+    self.Q = Spell({Slot = 0, SpellType = Enum.SpellType.SkillShot, Range = 300, SkillShotType = Enum.SkillShotType.Line, Collision = false, width = 40, delay = 0.25, speed = 1000})
+    self.W = Spell({Slot = 1, SpellType = Enum.SpellType.Active, Range = 0, time = 0})
+    self.E = Spell({Slot = 2, SpellType = Enum.SpellType.Targetted, Range = 700})
+    self.R = Spell({Slot = 3, SpellType = Enum.SpellType.Active, Range = 1000})
+
+    AddEvent(Enum.Event.OnDraw, function() self:OnDraw() end)
+    AddEvent(Enum.Event.OnTick, function() self:OnTick() end)
+    AddEvent(Enum.Event.OnDash, function(...) self:OnDash(...) end)
+    AddEvent(Enum.Event.OnDrawMenu, function(...) self:OnDrawMenu(...) end)
+    --
+    Orbwalker:RegisterPostAttackCallback(function(...) self:OnPostAttack(...) end)
+    Orbwalker:RegisterPreAttackCallback(function(...) self:OnPreAttack(...) end) 
+    --
+    AddEvent(Enum.Event.OnAfterAttack, function(...) self:OnAfterAttack(...) end)
+
+    self:MenuVayne()
     
-    local Q = 0
-    local W = 1
-    local E = 2
-    local R = 3
-    
-    local SpaceKeyCode = 32
-    local CKeyCode = 67
-    --local VKeyCode = 86
-    
-    
-    local SpellQ = {Range = 300, Speed = 2000, Delay = 0.25}
-    local SpellW = {Range = 550, Target = nil, Count = nil}
-    local SpellE = {Range = 550, Speed = 2000, Delay = 0.5}
-    local SpellR = {Range = 1000, Delay = 0.50, Invisible = false}
-    
-    local m = {}
-    m.pi = assert(math.pi)
-    m.huge = assert(math.huge)
-    m.floor = assert(math.floor)
-    m.ceil = assert(math.ceil)
-    m.abs = assert(math.abs)
-    m.deg = assert(math.deg)
-    m.atan = assert(math.atan)
-    m.sqrt = assert(math.sqrt) 
-    m.sin = assert(math.sin) 
-    m.cos = assert(math.cos) 
-    m.acos = assert(math.acos) 
-    m.max = assert(math.max)
-    m.min = assert(math.min)
-    
-    local function GetHeroes()
-        SearchAllChamp()
-        local t = pObjChamp
-        return t
-    end
-    
-    local function GetEnemies()
-        local t = {}
-        local h = GetHeroes()
-        for k,v in pairs(h) do
-            if IsEnemy(v) and IsChampion(v) then
-                table.insert(t, v)
+end 
+
+function Vayne:OnPostAttack(args)           
+    self.target = args.Target
+    --
+    local tType = self.target.Type      
+    local mode = self.QMode
+    if tType == 0 then
+        if CanCast(_Q) and ((self.mode == 0) or mode ~= 3) then
+            local tpos
+            local mode1 = self.Q2Mode
+            if mode1 == 1 then
+                tpos = self:GetAggressiveTumblePos(self.target)                                 
+            elseif mode1 == 2 then
+                tpos = self:GetKitingTumblePos(self.target)                             
+            elseif mode1 == 0 then
+                tpos = self:GetSmartTumblePos(self.target)                  
+            end             
+            if tpos ~= nil then CastSpellToPos(tpos.x, tpos.z, _Q) end
+        end         
+        if CanCast(_E) and self:ManaPercent(myHero) >= self.Mana1 then
+            if self:WStacks(self.target) == 2 then
+                CastSpellTarget(self.target.Addr, _E)
+            end
+        end             
+    elseif CanCast(_Q) and (tType == 3 and mode == 1) or mode == 2  then
+        local tpos = self:GetKitingTumblePos(self.target)
+        if tpos ~= nil then CastSpellToPos(tpos.x, tpos.z, _Q) end          
+    elseif CanCast(_Q) and tType == 2 and mode == 2 then
+        local tpos = self:GetKitingTumblePos(self.target)
+        if tpos ~= nil then CastSpellToPos(tpos.x, tpos.z, _Q) end
+    elseif CanCast(_Q) and tType == 1 and mode ~= 3 then
+        --tumble to closest wall
+    end     
+end
+
+function Vayne:OnPreAttack(args)
+    local targ1 = args.Target
+    if myHero.HasBuff("vaynetumblefade") then
+        for k,v in pairs(self.enemies) do 
+            if v.IsMelee and GetDistance(v) <= GetTrueAttackRange(v) then
+                args.Process = false
             end
         end
-        return t
-    end
-    
-    function sleep(s) 
-      local ntime = os.clock() + s
-      repeat until os.clock() > ntime
-    end
-    
-    local function GetTarget(range)
-        return GetEnemyChampCanKillFastest(range)
-    end
-    
-    local function GetDistanceSqr(Pos1, Pos2)
-        if Pos1 == nil or Pos2 == nil then
-            return math.huge
-        end
-        local Pos2 = Pos2 or Vector(GetPos(GetMyChamp()))
-        local dx = Pos1.x - Pos2.x
-        local dz = (Pos1.z or Pos1.y) - (Pos2.z or Pos2.y)
-        return dx * dx + dz * dz
-    end
-    
-    
-    local function GetDistance(p1, p2)
-        return m.sqrt(GetDistanceSqr(p1, p2))
-    end
-    
-    local function GetDistance2D(p1,p2)
-        return  m.sqrt(math.pow((p2.x - p1.x),2) + math.pow((p2.y - p1.y),2))
-    end
-    
-    
-    
-    local function IsImmobile(unit)
-        if CountBuffByType(unit, 5) ~= 0 or CountBuffByType(unit, 11) ~= 0 or CountBuffByType(unit, 24) ~= 0 or CountBuffByType(unit, 29) ~= 0 or IsRecall(unit) then
-            return true
-        end
-        return false
-    end
-    
-    local function IsValidTarget(target, range)
-        if target ~= 0 then
-            
-            local targetPos = Vector(GetPos(target))
-            local myHeroPos = Vector(GetPos(GetMyChamp()))		
-            if IsDead(target) == false and IsInFog(target) == false and GetTargetableToTeam(target) == 4 and IsEnemy(target) and GetDistanceSqr(myHeroPos, targetPos) < range * range and CountBuffByType(target, 17) == 0 and CountBuffByType(target, 15) == 0 then
-                return true
-            end
-        end
-        return false
-    end
-    
-    local function IsUnderEnemyTurret(pos)			--Will Only work near myHero
-        GetAllObjectAroundAnObject(myHero(), 2000)
-    
-        local objects = pObject	
-        for k,v in pairs(objects) do
-    
-            if IsTurret(v) and IsDead(v) == false and IsEnemy(v) and GetTargetableToTeam(v) == 4 then
-                local turretPos = Vector(GetPos(v))
-                if GetDistanceSqr(turretPos,pos) < 915*915 then
-                    return true				
-                end		
-            end 
-        end					
-        return false
-    end
-    
-    local function IsUnderAllyTurret(pos)			--Will Only work near myHero
-        GetAllObjectAroundAnObject(myHero(), 2000)
-        local objects = pObject
-        for k,v in pairs(objects) do
-            if IsTurret(v) and IsDead(v) == false and IsAlly(v) and GetTargetableToTeam(v) == 4 then
-                local turretPos = Vector(GetPos(v))
-                if GetDistanceSqr(turretPos,pos) < 915*915 then
-                    return true				
-                end		
-            end 
-        end					
-        return false
-    end
-    
-    local function EnemiesAround(object, range)
-        return CountEnemyChampAroundObject(object, range)
-    end
-    
-    local function GetPercentHP(target)
-        return GetHealthPoint(target)/GetHealthPointMax(target) * 100
-    end
-    
-    local function IsAfterAttack()
-        if CanMove() and not CanAttack() then
-            return true
-        else
-            return false
-        end
-    end
-    local function GetMyRange()
-        return GetAttackRange(GetMyChamp()) + GetOverrideCollisionRadius(GetMyChamp())
-    end
-    function DrawTextToScreen(text,v1)
-        local x1,y1 =  WorldToScreen(v1.x, v1.y, v1.z)
-        DrawTextD3DX(x1, y1+50 , text, Lua_ARGB(255, 255, 255, 255))
-    end
-    
-    local function _OnUpdateBuff(unit,buff,stacks)										
-        if string.lower(buff.Name) == "vaynesilvereddebuff" then
-            SpellW.Target = unit.Addr
-            SpellW.Count = stacks				
-        end
-    
-        if string.lower(buff.Name) == "vaynetumblefade" and unit.IsMe then
-            SpellR.Invisible = true		
-        end
-    end
-    
-    local function _OnRemoveBuff(unit,buff)										
-        if string.lower(buff.Name) == "vaynesilvereddebuff" then
-            SpellW.Target = nil
-            SpellW.Count = nil		
-        end
-    
-        if string.lower(buff.Name) == "vaynetumblefade" and unit.IsMe then
-            SpellR.Invisible = false		
-        end
-    end
-    
-    local function IsCollisionable(vector)
-        return IsWall(vector.x,vector.y,vector.z)
-    end
-    
-    local function IsCondemnable(target)
-        local pP = Vector(GetPos(GetMyChamp())) or Vector(0,0,0)
-        local eP = Vector(GetPos(target))	or Vector(0,0,0)
-        local pD = 450
-        
-        if (IsCollisionable(eP:Extended(pP,-pD)) or IsCollisionable(eP:Extended(pP, -pD/2)) or IsCollisionable(eP:Extended(pP, -pD/3))) then
-            if IsImmobile(target) or IsCasting(target) then
-                return true
-            end
-    
-            local enemiesCount = CountEnemyChampAroundObject(myHero(), 1200)
-            if 	enemiesCount > 1 and enemiesCount <= 3 then
-                for i=15, pD, 75 do
-                    vector3 = eP:Extended(pP, -i)
-                    if IsCollisionable(vector3) then
-                        return true
-                    end
-                end
-            else
-                local hitchance = 50
-                local angle = 0.2 * hitchance
-                local travelDistance = 0.5
-                local alpha = Vector((eP.x + travelDistance * math.cos(math.pi/180 * angle)),eP.y ,(eP.z + travelDistance * math.sin(math.pi/180 * angle)))
-                local beta = Vector((eP.x	- travelDistance * math.cos(math.pi/180 * angle)),eP.y, (eP.z - travelDistance * math.sin(math.pi/180 * angle)))
-                for i=15, pD, 100 do
-                    local col1 = alpha:Extended(pP, -i)
-                    local col2 = beta:Extended(pP, -i)
-                    DrawCircleGame(col1.x, col1.y, col1.z, 100, Lua_ARGB(255, 255, 255, 255))
-                    DrawCircleGame(col2.x, col2.y, col2.z, 100, Lua_ARGB(255, 255, 30, 255))
-                    if i>pD then return end
-                    if IsCollisionable(col1) and IsCollisionable(col2) then return true end
-                end
-                return false
-            end
-        end
-    end
-    
-    
-    local function IsDangerousPosition(pos)
-        if IsUnderEnemyTurret(pos) then return true 
-        end
-    
-    
-        local t = GetEnemies()
-    
-        for k,v in pairs(t) do
-    
-            local vPos = Vector(GetPos(v))
-            if IsDead(v) == false and IsEnemy(v) and GetDistanceSqr(pos, vPos) < 300 * 300 then return true end
-        end
-           return false
-    end
-    
-    
-    local function GetSmartTumblePos(target)
-        local mousePos = Vector(GetMousePos()) 
-        local myHeroPos = Vector(GetPos(GetMyChamp())) or Vector(0,0,0)
-        local possiblePos = myHeroPos:Extended(mousePos, 300) or Vector(0,0,0)
-        DrawCircleGame(possiblePos.x, possiblePos.y, possiblePos.z, 100, Lua_ARGB(255, 255, 255, 255))
-    
-    
-    
-        local targetPos = Vector(GetPos(target)) or Vector(0,0,0)
-        local p0 = myHeroPos	
-        local points= {
-        [1] = p0 + Vector(300,0,0),
-        [2] = p0 + Vector(277,0,114),
-        [3] = p0 + Vector(212,0,212),
-        [4] = p0 + Vector(114,0,277),
-        [5] = p0 + Vector(0,0,300),
-        [6] = p0 + Vector(-114,0,277),
-        [7] = p0 + Vector(-212,0,212),
-        [8] = p0 + Vector(-277,0,114),
-        [9] = p0 + Vector(-300,0,0),
-        [10] = p0 + Vector(-277,0,-114),
-        [11] = p0 + Vector(-212,0,-212),
-        [12] = p0 + Vector(-114,0,-277),
-        [13] = p0 + Vector(0,0,-300),
-        [14] = p0 + Vector(114,0,-277),
-        [15] = p0 + Vector(212,0,-212),
-        [16] = p0 + Vector(277,0,-114)}
-        
-        for i=1,#points do		
-            if IsDangerousPosition(points[i]) == false and GetDistanceSqr(points[i], targetPos) < 500 * 500 then
-                local pP = Vector(GetPos(GetMyChamp()))
-                local eP = Vector(GetPos(target))	
-                if (IsCollisionable(eP:Extended(pP,-450))) then 
-                    return points[i]
-                end 
-            end
-        end
-    
-        if IsDangerousPosition(possiblePos) == false then
-            return possiblePos
-        end
-    
-        
-        for i=1,#points do
-            if IsDangerousPosition(points[i]) == false and GetDistanceSqr(points[i], targetPos) < 500 * 500  then 
-                return points[i]
-            end
-        end	
-        return nil
-    end
-    
-    
-    local function AntiGapCloser()		
-        local target = CountEnemyChampAroundObject(myHero(), 1000)	
-        if IsCasting(myHero()) or CanCast(E) == false or Setting_IsComboUseE() == false or target == nil or target == 0 then return end	
-        local t = GetEnemies()
-        for k,v in pairs(t) do  
-            local enemy = GetAIHero(v)          
-            if enemy.IsValid and enemy.Distance <= GetMyRange() and enemy.IsVisible then
-                if enemy.IsDash then
-                    local myHeroPos = Vector(GetPos(GetMyChamp())) or Vector(0,0,0)
-                    --__PrintTextGame("myHeroPos " .. tostring(myHeroPos))
-                    local dashFrom = Vector(GetPos(v))	or Vector(0,0,0)
-                    --__PrintTextGame("dashFrom " .. tostring(dashFrom))
-                    local dashTo =  Vector(GetDestPos(v)) or Vector(0,0,0)
-                    --__PrintTextGame("dashTo " .. tostring(dashTo))
-                    local angle = math.atan( 50/((myHeroPos - dashFrom):Len()) )							-- 50 is the bounding radius approx.
-                    if (myHeroPos - dashFrom):Angle(dashTo - dashFrom) <= angle then
-                        CastSpellTarget(v, E)
-                        return         			
-                     end						
-                end
-            end
-        end
-    end
-    
-    local function StayInvisible()	
-        if SpellR.Invisible == false or EnemiesAround(myHero(), 350) == 0 then
-            --__PrintTextGame("Enabled atk")
-            SetLuaBasicAttackOnly(false)
-            return
-        end
-    
-        local t = GetEnemies()
-        for k,v in pairs(t) do
-            if GetAttackRange(v) < 400 and IsValidTarget(v, 350) then
-                SetLuaBasicAttackOnly(true)
-                --__PrintTextGame("Disabled atk")
+    end 
+    if self.CW then
+        for k,v in pairs(self.enemies) do 
+            if self:WStacks(v) >= 1 and GetDistance(v) <= GetTrueAttackRange(myHero) then               
+                args.Target = v
                 return
             end
-        end
+        end     
     end
+end
 
-    local function Combo()	
-        local target = GetTarget(1200)	
-        local mousePos = Vector(GetMousePos())	
-    
-    
-        if IsValidTarget(target,GetMyRange()) == false or IsCasting(myHero()) then return end
-    
-        --if GetPercentHP(target) < 80 then
-        --	BOTRK(target)
-        --end
-    
-        if Setting_IsComboUseR() and EnemiesAround(myHero(), 1000) >= 3 and CanCast(R) then
-    
-            CastSpellToPos(mousePos.x, mousePos.z, _R)
-        end
-    
-        if Setting_IsComboUseQ() and CanCast(Q) then
-            local qPos = GetSmartTumblePos(target)
-            if qPos ~= nil and IsAfterAttack() then
-                CastSpellToPos(qPos.x,qPos.z,Q)
-             end
-        end
-    
-    end
-    
-    local function Harass()
-        local target = GetTarget(1200)
-        if IsValidTarget(target,GetMyRange()) == false or IsCasting(myHero()) then return end
-    
-    
-        if Setting_IsHarassUseQ() and CanCast(Q) then
-            local qPos = GetSmartTumblePos(target)
-            if qPos ~= nil and IsAfterAttack() then
-                CastSpellToPos(qPos.x,qPos.z, Q)
-            end
-        end
-    
-        if Setting_IsHarassUseE() and CanCast(E) and SpellW.Count == 2 then
-            local eTarg = SpellW.Target
-            CastSpellTarget(eTarg, E)
-        end
-    
-    
-    end
-    
-    local function AutoCondemn()
-        
-    
-        local target = CountEnemyChampAroundObject(myHero(), 1000)
-    
-        if IsCasting(myHero()) or CanCast(E) == false or Setting_IsComboUseE() == false or target == nil or target == 0 then return end
-    
-        local t = GetEnemies()
-        for k,v in pairs(t) do
-    
-    
-            if IsValidTarget(v, GetMyRange()) then        	
-                if IsCondemnable(v) then        		
-                    CastSpellTarget(v, E)
-                     break
+
+function Vayne:OnAfterAttack(unit, target)
+    if (GetOrbMode() == 4 or GetOrbMode() == 2) and target ~= nil then
+        self:QMinionAA()
+    end 
+end 
+
+function Vayne:QMinionAA()
+    lastT = Orbwalker:GetOrbwalkingTarget()
+    for i, minions in ipairs(MinionManager.Enemy) do
+        if (minions) then
+            minion = GetUnit(minions)
+            if minion.IsDead == false and GetDistance(Vector(minion), Vector(myHero)) <= 800 and lastT.Addr ~= minion.Addr then
+                if (myHero.CalcDamage(minion.Addr, myHero.TotalDmg) + self.Q:GetDamage(minion) > minion.HP and myHero.CalcDamage(minion.Addr, myHero.TotalDmg) < minion.HP) then
+                    local tpos = self:GetKitingTumblePos(self.target)
+                    if tpos ~= nil then
+                        CastSpellToPos(tpos.x, tpos.z, _Q) 
+                    end 
                 end
             end
         end
     end
-    
-    function _OnUpdate()
-        if IsDead(myHero()) then return end	
-    
-        local myHeroPos = Vector(GetPos(GetMyChamp()))
+end
 
-        StayInvisible()
-        AntiGapCloser()
-    
-        AutoCondemn()
-        --KillSteal()
-        
-    
-    
-        if IsTyping() then return end --Wont Orbwalk while chatting
-        
-        if GetKeyPress(SpaceKeyCode) ~= 0 then
-            Combo()
-        elseif GetKeyPress(CKeyCode) ~= 0 then
-            SetLuaHarass(true)
-            Harass()
-        end
-        --[[
-        if nKeyCode == VKeyCode then
-            LaneClear()
-        end]]
+function Vayne:OnDash(unit, unitPos, unitPosTo, dashSpeed, dashGravity, dashDistance)
+    if CanCast(_E) == false then return end
+    if unit.IsEnemy and IsValidTarget(unit, self.E.Range) then                  
+        local angle = atan( 50/((myHero.pos - unitPos):Len()))                          -- 50 is the bounding radius approx.
+        if (myHero.pos - unitPos):Angle(unitPosTo - unitPos) <= angle then
+            CastSpellTarget(unit.Addr, _E)                                  
+        end     
     end
+end
+
+local function IsUnderEnemyTurret(pos, unit)            --Will Only work near myHero
+    unit = unit or myHero
+    GetAllObjectAroundAnObject(unit.Addr, 2000)
+    local objects = pObject 
+    for k,v in pairs(objects) do
+        if IsTurret(v) and IsDead(v) == false and IsEnemy(v) and GetTargetableToTeam(v) == 4 then
+            local turretPos = Vector(GetPos(v))
+            if GetDistanceSqr(turretPos,pos) < 915*915 then
+                return true             
+            end     
+        end 
+    end                 
+    return false
+end
+
+function Vayne:WStacks(target)
+    return GetBuffStack(target.Addr, "VayneSilveredDebuff")
+end
+
+function Vayne:IsDangerousPosition(pos)
+    if IsUnderEnemyTurret(pos) then return true 
+    end
+    local t = self:GetEnemies()
+    for k,v in pairs(t) do
+        local unit = GetAIHero(v)       
+        if not unit.IsDead and unit.IsEnemy and GetDistance(pos, unit) < 300 then return true end
+    end
+    return false
+end
+
+function Vayne:GetAggressiveTumblePos(target)
+    local mousePos = Vector(GetMousePos())
+    local targetPos = Vector(target)
+    if GetDistance(targetPos,mousePos) < GetDistance(targetPos) then return mousePos end
+end
+
+function Vayne:GetKitingTumblePos(target)
+    local mousePos = Vector(GetMousePos())
+    local targetPos = Vector(target)
+    local myHeroPos = Vector(myHero) 
+    local possiblePos = myHeroPos:Extended(mousePos, 300)   
+    if not self:IsDangerousPosition(possiblePos) and GetDistance(targetPos, possiblePos) > GetDistance(targetPos) then return possiblePos end
+end
+
+function Vayne:GetSmartTumblePos(target)
+    local mousePos = Vector(GetMousePos()) 
+    local myHeroPos = Vector(myHero) or Vector(0,0,0)
+    local possiblePos = myHeroPos:Extended(mousePos, 300) or Vector(0,0,0)
+    local targetPos = Vector(target) or Vector(0,0,0)   
+    local p0 = myHeroPos    
+    local points= {
+    [1] = p0 + Vector(300,0,0),
+    [2] = p0 + Vector(277,0,114),
+    [3] = p0 + Vector(212,0,212),
+    [4] = p0 + Vector(114,0,277),
+    [5] = p0 + Vector(0,0,300),
+    [6] = p0 + Vector(-114,0,277),
+    [7] = p0 + Vector(-212,0,212),
+    [8] = p0 + Vector(-277,0,114),
+    [9] = p0 + Vector(-300,0,0),
+    [10] = p0 + Vector(-277,0,-114),
+    [11] = p0 + Vector(-212,0,-212),
+    [12] = p0 + Vector(-114,0,-277),
+    [13] = p0 + Vector(0,0,-300),
+    [14] = p0 + Vector(114,0,-277),
+    [15] = p0 + Vector(212,0,-212),
+    [16] = p0 + Vector(277,0,-114)}
+    ---
+    for i=1,#points do      
+        if self:IsDangerousPosition(points[i]) == false and GetDistanceSqr(points[i], targetPos) < 500 * 500 then
+            if (self:IsCollisionable(targetPos:Extended(myHeroPos,-450))) then 
+                return points[i]
+            end 
+        end
+    end
+    if self:IsDangerousPosition(possiblePos) == false then
+        return possiblePos
+    end 
+    for i=1,#points do
+        if self:IsDangerousPosition(points[i]) == false and GetDistanceSqr(points[i], targetPos) < 500 * 500  then --and GetDistance(points[i],mousePos) <= GetDistance(bestPos, mousePos)
+            return points[i]
+        end
+    end     
+end
+
+function Vayne:IsCollisionable(vector)
+    return IsWall(vector.x,vector.y,vector.z)
+end
     
-    
-    Callback.Add("Update", function() _OnUpdate() end)
-    Callback.Add("UpdateBuff", function(...) _OnUpdateBuff(...) end)
-    Callback.Add("RemoveBuff", function(...) _OnRemoveBuff(...) end)
-    
-    
-    
+function Vayne:IsCondemnable(target) 
+    local pP = Vector(myHero) 
+    local eP = Vector(target)
+    local eP2 = Vector(GetDestPos(target.Addr))
+    local pD = 450  
+    if (self:IsCollisionable(eP:Extended(pP,-pD)) or self:IsCollisionable(eP:Extended(pP, -pD/2)) or self:IsCollisionable(eP:Extended(pP, -pD/3))) then
+        if self:IsImmobile(target) or target.IsCast then
+            return true
+        end     
+        local hitchance = 50 / 100
+        eP2 = eP + (eP2 - eP):Normalized() * target.MoveSpeed * hitchance * 0.5     
+        for i = 15, pD, 75 do
+            local col1 = eP2 + (eP2 - pP):Normalized() * i
+            local col2 = eP + (eP - pP):Normalized() * i
+            if self:IsCollisionable(col1) and self:IsCollisionable(col2) then return true end
+        end        
+    end
+end
+
+function Vayne:OnTick()
+    if myHero.IsDead or myHero.IsRecall or IsTyping() then return end   
+    --
+    self.enemies = nil
+    self.enemies = self:GetEnemies(1000)
+    ---
+    --[[if GetOrbMode() == 1 then
+        self:TwisCombo()
+    elseif GetOrbMode == 2 then
+        self:TwisHarass()
+    end]]  
+    if myHero.IsCast then return end 
+    self:Auto()  
+end 
+
+function Vayne:Auto()
+    if not self.enemies then return end 
+    if GetOrbMode() == 1 and #self.enemies >= self.RAmount and CanCast(_R) then
+        CastSpellToPos(myHero.x, myHero.z, _R)
+    end
+    if CanCast(_E) then
+        for k,v in pairs(self.enemies) do
+            if IsValidTarget(v, GetTrueAttackRange(myHero)) and self:IsCondemnable(v) then
+                CastSpellTarget(v.Addr, _E)   
+                break                       
+            end
+        end
+    end
+end 
+
+function Vayne:GetHeroes()
+    SearchAllChamp()
+    local t = pObjChamp
+    return t
+end
+
+function Vayne:GetEnemies(range)
+    local t = {}
+    local h = self:GetHeroes()
+    for k,v in pairs(h) do
+        if v ~= 0 then
+            local hero = GetAIHero(v)
+            if hero.IsEnemy and hero.IsValid and hero.Type == 0 and (not range or GetDistance(hero) < range) then
+                table.insert(t, hero)
+            end
+        end
+    end 
+    return t
+end
+
+function Vayne:MenuBool(stringKey, bool)
+	return ReadIniBoolean(self.menu, stringKey, bool)
+end
+
+function Vayne:MenuSliderInt(stringKey, valueDefault)
+	return ReadIniInteger(self.menu, stringKey, valueDefault)
+end
+
+function Vayne:MenuSliderFloat(stringKey, valueDefault)
+	return ReadIniFloat(self.menu, stringKey, valueDefault)
+end
+
+function Vayne:MenuComboBox(stringKey, valueDefault)
+	return ReadIniInteger(self.menu, stringKey, valueDefault)
+end
+
+function Vayne:MenuKeyBinding(stringKey, valueDefault)
+	return ReadIniInteger(self.menu, stringKey, valueDefault)
+end
+
+function Vayne:MenuVayne()
+    self.menu = "Vayne"
+    --Combo [[ Vayne ]]
+    self.CQ = self:MenuBool("Combo Q", true)
+    self.CW = self:MenuBool("Combo W", true)
+    self.AGPW = self:MenuBool("AntiGapCloser [W]", true)
+    self.RE = self:MenuBool("Reset E", true)
+    self.CE = self:MenuBool("Combo E", true)
+    self.GE = self:MenuBool(" [E]", true)
+    self.RAnt = self:MenuBool("Tartted R", true)
+    self.menu_DrawDamage = self:MenuBool("Draw Damage", true)
+
+    --Combo Mode
+    self.ComboMode = self:MenuComboBox("Combo[ Vayne ]", 2)
+    self.WMode = self:MenuComboBox("Mode [W] [ Vayne ]", 1)
+    self.hitminion = self:MenuSliderInt("Count Minion", 35)
+
+    --Clear
+    self.hQ = self:MenuBool("Last Q", true)
+    self.hE = self:MenuBool("Last E", true)
+
+     --Lane
+     self.LQ = self:MenuBool("Lane Q", true)
+     self.LW = self:MenuBool("Lane W", true)
+     self.LE = self:MenuBool("Lane E", true)
+     self.IsFa = self:MenuBool("Lane Safe", true)
+
+     self.QMode = self:MenuComboBox("Mode [Q] ", 1)
+     self.Q2Mode = self:MenuComboBox("Mode [Q] ", 0)
+
+     self.EonlyD = self:MenuBool("Only on Dagger", true)
+     self.FleeW = self:MenuBool("Flee [W]", true)
+     self.FleeMousePos = self:MenuBool("Flee [Mouse]", true)
+     --Dor
+     ---self.Modeself = self:MenuComboBox("Mode Self [R]", 1)
+     -- EonlyD 
+
+    --Add R
+    self.CR = self:MenuBool("Combo R", true)
+    self.RAmount = self:MenuSliderInt("Count [Around] Enemys", 2)
+    self.Mana1 = self:MenuSliderInt("Mana", 15)
+    self.Mana2 = self:MenuSliderInt("Mana", 50)
+    self.Mana3 = self:MenuSliderInt("Mana", 470)
+    self.Mana4 = self:MenuSliderInt("Mana", 5)
+
+    --KillSteal [[ Vayne ]]
+    self.KQ = self:MenuBool("KillSteal > Q", true)
+    self.AutoW = self:MenuBool("Auto > W", true)
+    self.KE = self:MenuBool("KillSteal > E", true)
+    self.KR = self:MenuBool("KillSteal > R", true)
+
+    --Draws [[ Vayne ]]
+    self.DQWER = self:MenuBool("Draw On/Off", false)
+    self.DaggerDraw = self:MenuBool("Draw Dagger", true)
+    self._Draw_Q = self:MenuBool("Draw Q", true)
+    self._Draw_W = self:MenuBool("Draw W", true)
+    self._Draw_E = self:MenuBool("Draw E", true)
+    self._Draw_R = self:MenuBool("Draw R", true)
+
+    self.AutoCoondem = self:MenuBool("Combo", true)
+    self.try = self:MenuBool("Flee", true)
+    self.CardBlue= self:MenuKeyBinding("Flee", 69)
+
+    self.Enalble_Mod_Skin = self:MenuBool("Enalble Mod Skin", true)
+    self.Set_Skin = self:MenuSliderInt("Set Skin", 11)
+
+
+    --Misc [[ Vayne ]] -- EonlyD 
+    --self.LogicR = self:MenuBool("Use Logic R?", true)]]
+end 
+
+function Vayne:OnDrawMenu()
+	if not Menu_Begin(self.menu) then return end
+        if (Menu_Begin("Settings Combo")) then
+            self.QMode = Menu_ComboBox("AA Reset Mode", self.QMode, "Heroes Only\0Heroes + Jungle\0Always\0Never\0", self.menu)
+            self.Q2Mode = Menu_ComboBox("Tumble Logic", self.Q2Mode, "Smart\0Aggressive\0Kite\0", self.menu)
+            Menu_Separator()
+            Menu_Text("--Settings [Q]--")
+            self.CQ = Menu_Bool("Auto Use On Immobile", self.CQ, self.menu)
+            self.Mana1 = Menu_SliderInt("Settings Mana [Combo] % >", self.Mana1, 0, 100, self.menu)
+            Menu_Separator()
+            Menu_Text("--Settings [W]--")
+            self.CW = Menu_Bool("Force Marked Target", self.CW, self.menu)
+            Menu_Separator()
+            Menu_Text("--Settings [E]--")
+            self.AutoCoondem = Menu_Bool("Use Auto Condemn", self.AutoCoondem, self.menu)
+            self.Mana2 = Menu_SliderInt("Condemn Hitchance", self.Mana2, 0, 100, self.menu)
+            self.Mana3 = Menu_SliderInt("Condemn Distance", self.Mana3, 450, 500, self.menu)
+			self.try = Menu_Bool("Use To Proc Third Mark", self.try, self.menu)
+            self.Mana4 = Menu_SliderInt("Min Mana % For [E]", self.Mana4, 0, 100, self.menu)
+            Menu_Separator()
+            Menu_Text("--Settings [R]--")
+            self.RAmount = Menu_SliderInt("Min. Enemies to Use", self.RAmount, 0, 5, self.menu)
+			Menu_End()
+        end
+	Menu_End()
+end
+
+--Fun
+function Vayne:ManaPercent(target)
+    return target.MP/target.MaxMP * 100
+end
+
+function Vayne:IsImmobile(unit)
+    if CountBuffByType(unit.Addr, 5) ~= 0 or CountBuffByType(unit.Addr, 11) ~= 0 or CountBuffByType(unit.Addr, 24) ~= 0 or CountBuffByType(unit.Addr, 29) ~= 0 or IsRecall(unit.Addr) then
+        return true
+    end
+    return false
+end
+
+function Vayne:GetTarget(range)
+    return GetEnemyChampCanKillFastest(range)
+end 
