@@ -23,6 +23,7 @@ function Pyke:Supporte()
     self.CanCast = true
     self.WUp = false
     self.WU2 = 0
+    self.DelayR = 0
     
 
     --PykeQ
@@ -293,7 +294,7 @@ function Pyke:CastE()
         local point = Vector(myHero):Extended(Vector(tare), 475)
         CastSpellToPos(point.x, point.z, _E)
     else
-        if self.CE and tare ~= nil and IsValidTarget(tare, 475) and not self.QCharged and myHero.HP < 50 then
+        if self.CE and tare ~= nil and IsValidTarget(tare, 475) and not self.QCharged and CountEnemyChampAroundObject(myHero.Addr, 800) > 1 then
             local point = Vector(myHero):Extended(Vector(tare), -200)
             CastSpellToPos(point.x, point.z, _E)
         end 
@@ -315,8 +316,9 @@ function Pyke:CastR()
     local targf = GetAIHero(merda)
     if targf ~= nil and IsValidTarget(targf, 850) and self:getRDmg(targf) > targf.HP then
         local CastPosition, HitChance, Position = self:GetQLinePreCore(targf)
-        if HitChance >= 5 then
+        if HitChance >= 5 and GetTimeGame() - self.DelayR >= 0.75 then
             CastSpellToPos(CastPosition.x, CastPosition.z, _R)
+            self.DelayR = GetTimeGame()
         end     
     end 
 end 
@@ -387,7 +389,7 @@ function Pyke:GetQLinePreCore(target)
 end
 
 function Pyke:GetRQLinePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.R.delay, self.R.width, self.R.Range, self.R.speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, 0.75, self.R.width, self.R.Range, self.R.speed, myHero.x, myHero.z, false, false, 5, 5, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
