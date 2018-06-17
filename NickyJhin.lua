@@ -30,6 +30,10 @@ function Jhin:ADC_()
     self.DelayR = 0
     self.FirstSpellStart = Vector(0,0,0)
     self.FirstSpellEnd = Vector(0,0,0)
+    --Logic E
+    self.pATHUnit = Vector(0,0,0)
+    self.Pathtarget = Vector(0,0,0)
+    self.Moving = false
 
     --Spells 
     self.Q = Spell({Slot = 0, SpellType = Enum.SpellType.Targetted, Range = 550})
@@ -44,6 +48,7 @@ function Jhin:ADC_()
     AddEvent(Enum.Event.OnRemoveBuff, function(...) self:OnRemoveBuff(...) end)
     AddEvent(Enum.Event.OnDrawMenu, function(...) self:OnDrawMenu(...) end)
     AddEvent(Enum.Event.OnVision, function(...) self:OnVision(...) end)  
+    AddEvent(Enum.Event.OnNewPath, function(...) self:OnNewPath(...) end)
     --
     Orbwalker:RegisterPostAttackCallback(function(...) self:OnPostAttack(...) end) 
 
@@ -87,6 +92,11 @@ function Jhin:OnTick()
         self:CastQNotAttac()
     end 
 
+    self:CasCastRelad()
+    self:KillRoub()
+    --LogicE
+    self:LogicE()
+
     --Stack Passive
     if GetSpellLevel(myHero.Addr, _R) == 1 then
         self.RStack = 4 
@@ -99,12 +109,118 @@ function Jhin:OnTick()
     end
 end 
 
+function Jhin:CanMove(unit)
+	if (unit.MoveSpeed < 50 or CountBuffByType(unit.Addr, 5) == 1 or CountBuffByType(unit.Addr, 21) == 1 or CountBuffByType(unit.Addr, 11) == 1 or CountBuffByType(unit.Addr, 29) == 1 or
+		unit.HasBuff("recall") or CountBuffByType(unit.Addr, 30) == 1 or CountBuffByType(unit.Addr, 22) == 1 or CountBuffByType(unit.Addr, 8) == 1 or CountBuffByType(unit.Addr, 24) == 1
+		or CountBuffByType(unit.Addr, 20) == 1 or CountBuffByType(unit.Addr, 18) == 1) then
+		return false
+	end
+	return true
+end
+
+function Jhin:LogicE()
+	local target = GetAIHero(GetTargetOrb())
+	if target ~= 0 and GetAmmoSpell(myHero.Addr, _E) > 1 then
+		local CastPosition, HitChance, Position = self:GetECirclePreCore(target)
+		local posW1 = Vector(target):Extended(Vector(myHero), - 200)
+		local posW2 = Vector(target):Extended(Vector(myHero), 200)
+		if GetOrbMode() == 1 and GetAmmoSpell(myHero.Addr, _E) >= 1 then
+			CastSpellToPos(posW1.x, posW1.z, _E)
+		end
+
+		if GetOrbMode() == 1 and GetAmmoSpell(myHero.Addr, _E) >= 1 then
+			CastSpellToPos(posW2.x, posW2.z, _E)
+			return
+		end
+	end
+	for i,hero in pairs(self:GetEnemies(750)) do
+		if IsValidTarget(hero, self.E.Range - 100) then
+			target = GetAIHero(hero)
+			local CastPosition, HitChance, Position = self:GetECirclePreCore(target)
+			if not self:CanMove(target)  then
+				CastSpellToPos(target.x, target.z, _E)
+			end
+			if GetOrbMode() == 1 then
+				if GetDistance(CastPosition, Vector(target)) > 200 then
+					if self.Moving and HitChance >= 6 then
+						CastSpellToPos(castPosX, castPosZ, _E)
+					end
+				end
+			end
+		end
+	end
+	if (GetTimeGame() * 10) % 2 < 0.03 then
+		local AmmoW = {3, 3, 4, 4, 5}
+		local myHeroPos = Vector(myHero.x, myHero.y, myHero.z)
+		if GetAmmoSpell(myHero.Addr, _E) == AmmoW[myHero.LevelSpell(_E)] and CountEnemyChampAroundObject(myHero.Addr, 1000) == 0 then
+			points = self:CirclePoints(8, self.E.Range, myHero)
+			for i, point in pairs(points) do
+				if self:IsUnderTurretEnemy(point) and not IsWall(point.x, point.y, point.z) then
+					CastSpellToPos(point.x, point.z, _E)
+				end
+			end
+		end
+	end
+end
+
+function Jhin:OnNewPath(unit, startPos, endPos, isDash, dashSpeed ,dashGravity, dashDistance)
+	if unit.IsMe then
+		self.pATHUnit = endPos
+	end
+	local TargetE = GetTargetSelector(1000, 0)
+	if CanCast(_E) and TargetE ~= 0 then
+		target = GetAIHero(TargetE)
+		if unit.NetworkId == target.NetworkId then
+			self.Pathtarget = endPos
+		end
+	end
+
+	if self.pATHUnit ~= Vector(0,0,0) and self.Pathtarget ~= Vector(0,0,0) then
+		local myHeroPos = Vector(myHero.x, myHero.y, myHero.z)
+		local getAngle = myHeroPos:AngleBetween(self.pATHUnit, self.Pathtarget)
+		if(getAngle < 20) then
+            self.Moving = true;
+        else
+            self.Moving = false;
+        end
+	end
+end
+
 function Jhin:OnPostAttack()
     local TargetQ = GetTargetSelector(self.Q.Range, 1)
     target = GetAIHero(TargetQ)
     if TargetQ ~= 0 and self.AA then
         if IsValidTarget(target, self.Q.Range) then
             CastSpellTarget(target.Addr, _Q)
+        end 
+    end 
+end 
+
+function Jhin:CasCastRelad()
+    local TargetQ = GetTargetSelector(self.Q.Range, 1)
+    target = GetAIHero(TargetQ)
+    if TargetQ ~= 0 and self.recharging and GetOrbMode() == 1 then
+        if IsValidTarget(target, self.Q.Range) then
+            CastSpellTarget(target.Addr, _Q)
+        end 
+    end 
+end 
+
+function Jhin:KillRoub()
+    for i ,enemys in pairs(self:GetEnemies(1100)) do
+        local enemys = GetTargetSelector(1000)
+        target = GetAIHero(enemys)
+        if target ~= 0 then
+            if self.Q:IsReady() then
+				if target ~= nil and target.IsValid and self.Q:GetDamage(target) > target.HP then
+					CastSpellTarget(target.Addr, _Q)
+				end
+			end
+			if self.W:IsReady() then
+				if target ~= nil and target.IsValid and self.W:GetDamage(target) > target.HP then
+					CastSpellToPos(target.x, target.z, _W)
+				end
+            end
         end 
     end 
 end 
@@ -388,6 +504,32 @@ function Jhin:RLinePreCore(target)
 		 return CastPosition, HitChance, Position
 	end
 	return nil , 0 , nil
+end
+
+function Jhin:GetECirclePreCore(target)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 1, self.E.delay, self.E.width, self.E.Range, self.E.speed, myHero.x, myHero.z, false, false, 1, 5, 5, 5, 5, 5)
+	if target ~= nil then
+		 CastPosition = Vector(castPosX, target.y, castPosZ)
+		 HitChance = hitChance
+		 Position = Vector(unitPosX, target.y, unitPosZ)
+		 return CastPosition, HitChance, Position
+	end
+	return nil , 0 , nil
+end
+
+
+function Jhin:IsUnderTurretEnemy(pos)			--Will Only work near myHero
+	GetAllUnitAroundAnObject(myHero.Addr, 2000)
+	local objects = pUnit
+	for k,v in pairs(objects) do
+		if IsTurret(v) and not IsDead(v) and IsEnemy(v) and GetTargetableToTeam(v) == 4 then
+			local turretPos = Vector(GetPosX(v), GetPosY(v), GetPosZ(v))
+			if GetDistanceSqr(turretPos,pos) < 915*915 then
+				return true
+			end
+		end
+	end
+	return false
 end
 
 -----------------
