@@ -5,7 +5,7 @@ IncludeFile("Lib\\SDK.lua")
 
 class "Jhin"
 
-local ScriptXan = 0.1
+local ScriptXan = 0.2
 local NameCreat = "Jace Nicky"
 
 
@@ -58,7 +58,7 @@ function Jhin:OnTick()
     else
         self.RActive = false
     end
-    
+
     if GetKeyPress(self.ActR) > 0 then
         if self.RMode == 0 then
             self:AtiveR()
@@ -149,7 +149,7 @@ function Jhin:OnUpdateBuff(source, unit, buff, stacks)
         self.GoodBay = myHero    
     end 
     if unit.IsEnemy and buff.Name == "jhinespotteddebuff" then
-        self.MarkedEne = unit.IsEnemy
+        self.MarkedEne = unit
     end 
 end
 
@@ -281,27 +281,33 @@ function Jhin:CanWNotMarked()
 end 
 
 function Jhin:CanWMarked()
-    local TargetR = GetTargetSelector(self.W.Range, 1)
-	if TargetR ~= nil and GetOrbMode() == 1 then
-        target = GetAIHero(TargetR)
-        if not self.RActive and IsValidTarget(target, self.W.Range) and self.MarkedEne then
-            local CastPosition, HitChance, Position = self:WLinePreCore(target)
-            if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _W)
+    for k, v in pairs(self:GetEnemies(2000)) do
+        if v ~= 0 then
+            local target = GetAIHero(v)
+            if self.MarkedEne[target] ~= 0 and GetOrbMode() == 1 then
+                if not self.RActive and IsValidTarget(target, self.W.Range) then
+                    local CastPosition, HitChance, Position = self:WLinePreCore(target)
+                    if HitChance >= 5 then
+                        CastSpellToPos(CastPosition.x, CastPosition.z, _W)
+                    end 
+                end 
             end 
         end 
-    end 
+    end
 end 
 
 function Jhin:AutoFocusW()
-    local TargetR = GetTargetSelector(self.W.Range, 1)
-	if TargetR ~= nil and self:ManaPercent(myHero) >= self.Mana1 then
-        target = GetAIHero(TargetR)
-        if not self.RActive and IsValidTarget(target, self.W.Range) and self.MarkedEne then
-            local CastPosition, HitChance, Position = self:WLinePreCore(target)
-            if HitChance >= 5 then
-                CastSpellToPos(CastPosition.x, CastPosition.z, _W)
-            end 
+    for k, v in pairs(self:GetEnemies(2000)) do
+        if v ~= 0 then
+            local target = GetAIHero(v)
+            if self.MarkedEne[target] ~= 0 and self:ManaPercent(myHero) >= self.Mana1 then
+                if not self.RActive and IsValidTarget(target, self.W.Range)  then
+                    local CastPosition, HitChance, Position = self:WLinePreCore(target)
+                    if HitChance >= 5 then
+                        CastSpellToPos(CastPosition.x, CastPosition.z, _W)
+                    end 
+                end 
+            end
         end 
     end 
 end 
