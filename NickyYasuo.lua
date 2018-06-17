@@ -297,16 +297,21 @@ end
 function Yasuo:OnTick()
     if IsDead(myHero.Addr) or myHero.IsRecall or IsTyping() or not IsRiotOnTop() then return end
 
+    self.enemies = nil
+    local enemies = self:GetEnemies(1500)    
+    self.enemies = #enemies >= 1 and enemies
+    ---self.target = self:GetTarget(1500)
+
     --AUTO
     self:AutoQ()
 
     if GetOrbMode() == 1 then
-        local TargetCombo= GetTargetSelector(2000, 1)
-        if TargetCombo ~= nil then
-            target = GetAIHero(TargetCombo)
-            self:ComboY(target)
-            self:CastR(target)
-        end 
+        -- TargetCombo= GetTargetSelector(2000, 1)
+        --if TargetCombo ~= nil then
+           -- target = GetAIHero(TargetCombo)
+            self:ComboY(self.enemies)
+            self:CastR(self.enemies)
+        --end 
     end
 
     if self.menu_AutoQ then
@@ -316,6 +321,7 @@ function Yasuo:OnTick()
     if GetOrbMode() == 2 or GetOrbMode() == 4  then
         self:CastEY()
         self:CASTEw()
+        self:AutoQ()
     end 
     
     if GetBuffByName(myHero.Addr, "YasuoQW") > 0 then
@@ -405,7 +411,7 @@ function Yasuo:OnTick()
 end 
 
 function Yasuo:ComboY(target)
-    if target and target ~= 0 then
+    for k, target in pairs(self.enemies) do
         if self.E:IsReady() then
             if IsValidTarget(target, self.E.Range) and not self:IsMarked(target) and not self:IsUnderTurretEnemy(self:DashEndPos(target)) and GetDistance(GetAIHero(target), self:DashEndPos(GetAIHero(target))) <= GetDistance(GetAIHero(target)) then
                 CastSpellTarget(target.Addr, _E)
@@ -461,7 +467,7 @@ end
 function Yasuo:CastEY()
     for i, minion in pairs(self:EnemyMinionsTbl(500)) do
         if minion ~= 0 then
-            if self.Q:IsReady() and GetDistance(Vector(minion)) <= 450 then
+            if self.Q:IsReady() and GetDistance(Vector(minion)) <= 450 and not self.Q.YQ3 then
                 CastSpellToPos(minion.x, minion.z, _Q)
             end 
             if myHero.IsDash and GetDistance(minion) <= 250 and self.Q.YQ3 then
@@ -488,6 +494,7 @@ end
 end 
 
 function Yasuo:CastR(target)
+    for k, target in pairs(self.enemies) do
     if self.R.Whitelist then
         self.KnockedEnemies = {}     
         if (CountBuffByType(target.Addr, 29) > 0 or CountBuffByType(target.Addr, 30) > 0 or GetBuffByName(target.Addr, "YasuoQ3Mis") > 0) then
@@ -504,6 +511,7 @@ function Yasuo:CastR(target)
         end 
     end 
 end 
+end 
 
 function Yasuo:LogiR(target)
     if CountBuffByType(target.Addr, 29) > 0 or CountBuffByType(target.Addr, 30) > 0 or GetBuffByName(target.Addr, "YasuoQ3Mis") > 0 then
@@ -514,7 +522,7 @@ end
 
 function Yasuo:OnDraw()
     local TargetCombo= GetTargetSelector(2000, 1)
-        if TargetCombo ~= nil then
+        if TargetCombo ~= 0 then
         target = GetAIHero(TargetCombo)
         local pos = Vector(target)
         DrawCircleGame(pos.x, pos.y, pos.z, 150, Lua_ARGB(255, 0, 204, 255))
@@ -905,6 +913,11 @@ function Yasuo:GetEnemies(range)
     end
     return t
 end
+
+
+function Yasuo:GetTarget(range)
+    return GetEnemyChampCanKillFastest(range)
+end 
 
 --´PredCOre
 function Yasuo:GetQLinePreCore(target)
