@@ -6,7 +6,7 @@ IncludeFile("Lib\\SDK.lua")
 class "Vayne"
 
 
-local ScriptXan = 2.4
+local ScriptXan = 0.4
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -58,7 +58,7 @@ function Vayne:OnPostAttack(args)
             end             
             if tpos ~= nil then CastSpellToPos(tpos.x, tpos.z, _Q) end
         end         
-        if CanCast(_E) and self:ManaPercent(myHero) >= self.Mana1 then
+        if CanCast(_E) and self.try and self:ManaPercent(myHero) >= self.Mana1 then
             if self:WStacks(self.target) == 2 then
                 CastSpellTarget(self.target.Addr, _E)
             end
@@ -365,7 +365,7 @@ function Vayne:MenuVayne()
     self._Draw_R = self:MenuBool("Draw R", true)
 
     self.AutoCoondem = self:MenuBool("Combo", true)
-    self.try = self:MenuBool("Flee", true)
+    self.try = self:MenuBool("Flee", false)
     self.CardBlue= self:MenuKeyBinding("Flee", 69)
 
     self.Enalble_Mod_Skin = self:MenuBool("Enalble Mod Skin", true)
