@@ -5,7 +5,7 @@ IncludeFile("Lib\\SDK.lua")
 
 class "Jhin"
 
-local ScriptXan = 0.3
+local ScriptXan = 0.4
 local NameCreat = "Jace Nicky"
 
 
@@ -78,7 +78,7 @@ function Jhin:OnTick()
         self:CanR2()
     end
 
-    if self.WMode == 0 then
+    if self.WMode == 0 then 
         self:CanWNotMarked()
     elseif self.WMode == 1 then
         self:CanWMarked()
@@ -92,7 +92,9 @@ function Jhin:OnTick()
         self:CastQNotAttac()
     end 
 
-    self:CasCastRelad()
+    --self:Teste()
+
+    --self:CasCastRelad()
     self:KillRoub()
     --LogicE
     self:LogicE()
@@ -190,16 +192,6 @@ function Jhin:OnPostAttack()
     local TargetQ = GetTargetSelector(self.Q.Range, 1)
     target = GetAIHero(TargetQ)
     if TargetQ ~= 0 and self.AA then
-        if IsValidTarget(target, self.Q.Range) then
-            CastSpellTarget(target.Addr, _Q)
-        end 
-    end 
-end 
-
-function Jhin:CasCastRelad()
-    local TargetQ = GetTargetSelector(self.Q.Range, 1)
-    target = GetAIHero(TargetQ)
-    if TargetQ ~= 0 and self.recharging and GetOrbMode() == 1 then
         if IsValidTarget(target, self.Q.Range) then
             CastSpellTarget(target.Addr, _Q)
         end 
