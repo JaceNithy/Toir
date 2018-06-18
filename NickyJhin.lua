@@ -5,7 +5,7 @@ IncludeFile("Lib\\SDK.lua")
 
 class "Jhin"
 
-local ScriptXan = 0.2
+local ScriptXan = 0.3
 local NameCreat = "Jace Nicky"
 
 
@@ -400,7 +400,7 @@ function Jhin:CanWMarked()
     for k, v in pairs(self:GetEnemies(2000)) do
         if v ~= 0 then
             local target = GetAIHero(v)
-            if self.MarkedEne[target] ~= 0 and GetOrbMode() == 1 then
+            if self.MarkedEne.NetworkId == target.NetworkId and GetOrbMode() == 1 then
                 if not self.RActive and IsValidTarget(target, self.W.Range) then
                     local CastPosition, HitChance, Position = self:WLinePreCore(target)
                     if HitChance >= 5 then
@@ -416,7 +416,7 @@ function Jhin:AutoFocusW()
     for k, v in pairs(self:GetEnemies(2000)) do
         if v ~= 0 then
             local target = GetAIHero(v)
-            if self.MarkedEne[target] ~= 0 and self:ManaPercent(myHero) >= self.Mana1 then
+            if self.MarkedEne.NetworkId == target.NetworkId and self:ManaPercent(myHero) >= self.Mana1 then
                 if not self.RActive and IsValidTarget(target, self.W.Range)  then
                     local CastPosition, HitChance, Position = self:WLinePreCore(target)
                     if HitChance >= 5 then
