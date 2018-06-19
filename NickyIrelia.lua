@@ -4,7 +4,7 @@ IncludeFile("Lib\\DamageIndicator.lua")
 class "Irelia"
 
 
-local ScriptXan = 1.4
+local ScriptXan = 1.5
 local NameCreat = "Jace Nicky"
 
 function OnLoad()
@@ -37,7 +37,7 @@ function Irelia:_Top()
 
     --Spell
     self.Q = Spell({Slot = 0, SpellType = Enum.SpellType.Targetted, Range = 700})
-    self.W = ({Slot = 0, delay = 0.25, MinRange = 450, MaxRange = 850, speed = 2000, width = 70})
+    self.W = Spell({Slot = 1, SpellType = Enum.SpellType.SkillShot, Range = 800, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
     self.E = Spell({Slot = 2, SpellType = Enum.SpellType.SkillShot, Range = 1000, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
     self.R = Spell({Slot = 3, SpellType = Enum.SpellType.SkillShot, Range = 1200, SkillShotType = Enum.SkillShotType.Line, Collision = false, Width = 160, Delay = 400, Speed = 2000})
 
@@ -56,14 +56,12 @@ end
 function Irelia:OnTick()
     if (IsDead(myHero.Addr) or myHero.IsRecall or IsTyping() or IsDodging()) or not IsRiotOnTop() then return end
 
-    local TempoCang = GetTimeGame() - self.CastTime
-    local range = self:ChargeRangeW(TempoCang)
-
     self:KillSteal()
 
     if GetOrbMode() == 1 then
         self:XinCombo()
         self:CastQExtende()
+        self:CastW()
         self:CastQUse()
         self:CastR()
     end 
@@ -291,7 +289,7 @@ function Irelia:CastQExtende()
     end
     for i, minion in pairs(self:EnemyMinionsTbl(1100)) do
         if minion ~= 0 then
-            if self.Q:GetDamage(minion) > minion.HP then
+            if self:GetQDamage(minion) > minion.HP then
                 if self.CoutTributo == 1 and E2User() and GetDistanceSqr(target, minion) < 1000 * 1000 then    
                     CastSpellTarget(minion.Addr, _Q)
                 end 
@@ -324,7 +322,7 @@ function Irelia:CastQUse()
             end 
         end
         if self.QMode == 1 then
-            if self.Marka[target] ~= 0 then
+            if self.Marka.NetworkId == target.NetworkId then
                 if self.Q:IsReady() and IsValidTarget(target, self.Q.Range) then
                     CastSpellTarget(target.Addr, _Q)  
                 end 
@@ -338,6 +336,31 @@ function Irelia:CastQUse()
        self:CastTiamat()
     end     
 end 
+
+function Irelia:CastW()
+    local mousePos = Vector(GetMousePos())
+    local targetC = GetTargetSelector(2000, 0)
+    target = GetAIHero(targetC)
+    if targetC ~= 0 then
+        if not self.isWactive and self.CoutTributo == 0 then 
+            if IsValidTarget(target, 700) then 
+                local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
+                if HitChance >= 5 then
+                    CastSpellToPos(CastPosition.x, CastPosition.z, _W)
+                end 
+            end 
+        end 
+        if self.isWactive then
+            if IsValidTarget(target, 700) then 
+                local CastPosition, HitChance, Position = self:GetWLinePreCore(target)
+                if HitChance >= 5 then
+                    ReleaseSpellToPos(CastPosition.x, CastPosition.z, _W)
+                end 
+            end 
+        end 
+    end 
+end 
+
 
 function Irelia:LaneQ()
     for i, minion in pairs(self:EnemyMinionsTbl(1100)) do
@@ -368,7 +391,7 @@ function Irelia:KillSteal()
         target = GetAIHero(enemys)
         if target ~= 0 then
             if self.Q:IsReady() then
-				if target ~= nil and target.IsValid and self.Q:GetDamage(target) > target.HP then
+				if target ~= nil and target.IsValid and self:OfcQDamage(target) > target.HP then
 					CastSpellTarget(target.Addr, _Q)
 				end
 			end
@@ -562,7 +585,7 @@ function E2User()
 end
 
 function Irelia:GetELinePreCore(target)
-	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, self.E.delay, self.E.width, 1000, self.E.speed, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
+	local castPosX, castPosZ, unitPosX, unitPosZ, hitChance, _aoeTargetsHitCount = GetPredictionCore(target.Addr, 0, 0.25, 90, 1000, 2000, myHero.x, myHero.z, false, false, 10, 5, 5, 5, 5, 5)
 	if target ~= nil then
 		 CastPosition = Vector(castPosX, target.y, castPosZ)
 		 HitChance = hitChance
@@ -594,15 +617,6 @@ function Irelia:GetWLinePreCore(target)
 	return nil , 0 , nil
 end
 
-function Irelia:ChargeRangeW(tempo)
-	local rangediff = self.W.MaxRange - self.W.MinRange
-	local miniomorange = self.W.MinRange
-	local AlcanceT = rangediff / 1.3 * tempo + miniomorange
-    if AlcanceT > self.W.MaxRange then 
-        AlcanceT = self.W.MaxRange 
-    end
-	return AlcanceT
-end
 
 function Irelia:EnemyMinionsTbl(range)
     GetAllUnitAroundAnObject(myHero.Addr, range)
@@ -657,6 +671,31 @@ function Irelia:CastTiamat()
     end
 end
 
+function Irelia:GetQDamage(target)
+    if target ~= 0 and CanCast(_Q) then
+		local Damage = 0
+		local DamageAP = {10, 30, 50, 70, 90}
+
+        if self.Q:IsReady() then
+			Damage = (DamageAP[myHero.LevelSpell(_Q)] + 0.70 * myHero.BonusDmg)
+        end
+		return myHero.CalcDamage(target.Addr, Damage)
+	end
+	return 0
+end
+
+function Irelia:OfcQDamage(target) -- Ty Nechrito <3 THAKS <3 
+    local aa = myHero.TotalDmg
+    local dmg = aa
+  
+    if self.Q:IsReady() then
+        dmg = dmg + self:GetQDamage(target) 
+    end
+
+    dmg = self:RealDamage(target, dmg)
+    return dmg
+end
+
 function Irelia:ComboDamage(target) -- Ty Nechrito <3 THAKS <3 
     local aa = myHero.TotalDmg
   
@@ -678,7 +717,7 @@ function Irelia:ComboDamage(target) -- Ty Nechrito <3 THAKS <3
     end
   
     if self.Q:IsReady() then
-        dmg = dmg + (self.Q:GetDamage(target) + aa) 
+        dmg = dmg + (self:GetQDamage(target) + aa) 
     end
   
     dmg = self:RealDamage(target, dmg)
