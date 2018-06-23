@@ -112,7 +112,7 @@ function Nasus:TopLane()
               self.Combo = Menu_KeyBinding("Combo", self.Combo, self.menu)
               self.LastHit = Menu_KeyBinding("Last Hit", self.LastHit, self.menu)
               self.LaneClear = Menu_KeyBinding("Lane Clear", self.LaneClear, self.menu)
-              Menu_End()
+             - Menu_End()
           end
           Menu_End()
       end
@@ -164,7 +164,7 @@ end
 
 function Nasus:Epos()
     local UseE = GetTargetSelector(640)
-    Enemy = GetAIHero(UseE)
+    -Enemy = GetAIHero(UseE)
     if CanCast(_E) and self.CE and UseE ~= 0 and IsValidTarget(Enemy, 640) then
         local CEPosition, HitChance, Position = self.PredNasus:GetCircularCastPosition(Enemy, self.E.delay, self.E.width, self.E.range, self.E.speed, myHero, false)
 		if HitChance >= 2 then
@@ -214,7 +214,7 @@ function Nasus:OnTick()
 
     self:KillEnemy()
 
-    if GetKeyPress(self.LastHit) > 0 then	
+    -if GetKeyPress(self.LastHit) > 0 then	
         self:FarmeQ()
     end
 
