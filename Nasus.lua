@@ -214,7 +214,7 @@ function Nasus:OnTick()
 
     self:KillEnemy()
 
-    -if GetKeyPress(self.LastHit) > 0 then	
+    if GetKeyPress(self.LastHit) > 0 then	
         self:FarmeQ()
     end
 
